@@ -22,6 +22,7 @@ Mehmonxona faoliyatini boshqarish uchun **bitta HTML faylda** ishlaydigan demo w
 - **Retrospektiv** — sprint tahlili, burndown chart va harakatlar rejasi
 - **Reja va risklar** — Gantt diagrammasi, risk matritsasi va risk registri
 - **CI/CD** — GitHub Actions pipeline, PR review va branch protection ko'rinishi
+- **Yakuniy** — tayyorlik dashboardi, COCOMO kalkulyatori, MLOps rejasi va himoya skripti
 - **Sozlamalar** — JSON zaxira, import va demo ma'lumotlarni tiklash
 
 ## Ekran rasmlari
@@ -53,6 +54,16 @@ Mehmonxona faoliyatini boshqarish uchun **bitta HTML faylda** ishlaydigan demo w
 ### CI/CD va code review
 
 ![CI/CD](screenshots/ci.png)
+
+### Yakuniy loyiha: COCOMO va MLOps
+
+![Yakuniy loyiha](screenshots/final.png)
+
+![COCOMO](screenshots/cocomo.png)
+
+![MLOps](screenshots/mlops.png)
+
+![Himoya](screenshots/defense.png)
 
 ## Demo hisoblar
 
@@ -94,7 +105,8 @@ hotel-management-system/
 │   ├── Laboratoriya-3.docx
 │   ├── Laboratoriya-4.docx
 │   ├── Laboratoriya-5.docx
-│   └── Laboratoriya-6.docx
+│   ├── Laboratoriya-6.docx
+│   └── Laboratoriya-7.docx
 └── screenshots/
     ├── dashboard.png
     ├── bookings-calendar.png
@@ -104,7 +116,11 @@ hotel-management-system/
     ├── invoices.png
     ├── reports.png
     ├── gantt-risk.png
-    └── ci.png
+    ├── ci.png
+    ├── final.png
+    ├── cocomo.png
+    ├── mlops.png
+    └── defense.png
 ```
 
 ## Hujjatlar
@@ -116,6 +132,7 @@ hotel-management-system/
 - [Laboratoriya 4 — Gantt, risk registri va bronlash](docs/Laboratoriya-4.docx)
 - [Laboratoriya 5 — Code Review, CI va joylashtirish](docs/Laboratoriya-5.docx)
 - [Laboratoriya 6 — Retrospektiv, burndown va moliya](docs/Laboratoriya-6.docx)
+- [Laboratoriya 7 — COCOMO, MLOps va yakuniy himoya](docs/Laboratoriya-7.docx)
 
 ## Texnik eslatmalar
 

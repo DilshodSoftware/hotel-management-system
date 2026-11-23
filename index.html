@@ -661,6 +661,11 @@ const ORDER_STATUS = {
   delivered: { label:"Yetkazilgan", cls:"green" },
   cancelled: { label:"Bekor", cls:"red" }
 };
+const COCOMO_MODES = {
+  organic:  { label:"Organic", a:2.4, b:1.05, c:2.5, d:0.38 },
+  semi:     { label:"Semi-detached", a:3.0, b:1.12, c:2.5, d:0.35 },
+  embedded: { label:"Embedded", a:3.6, b:1.20, c:2.5, d:0.32 }
+};
 const ISSUE_STATUS = {
   backlog:  { label:"Backlog",     cls:"gray" },
   todo:     { label:"To Do",       cls:"blue" },
@@ -711,6 +716,7 @@ const NAV = [
   { id:"payments", label:"To'lovlar", icon:"card", roles:["admin","manager","accountant"] },
   { id:"reports", label:"Hisobotlar", icon:"grid", roles:["admin","manager","accountant"] },
   { id:"ci", label:"CI/CD", icon:"shield", roles:["admin","manager"] },
+  { id:"final", label:"Yakuniy", icon:"check", roles:["admin","manager"] },
   { id:"users", label:"Foydalanuvchilar", icon:"shield", roles:["admin"] },
   { id:"settings", label:"Sozlamalar", icon:"settings", roles:["admin"] }
 ];
@@ -727,6 +733,8 @@ let roomView = "table";
 let filters = { q:"", type:"", status:"", floor:"", sort:"number" };
 let bookingFilters = { q:"", status:"" };
 let bookingView = "table";
+let finalTab = "readiness";
+let cocomo = { kloc: 14.2, mode: "semi", rate: 8000000 };
 let clientQuery = "";
 let clientFilter = "all";
 let paymentQuery = "";
@@ -1333,6 +1341,7 @@ function render() {
     reports: renderReports,
     retro: renderRetro,
     ci: renderCI,
+    final: renderFinal,
     users: renderUsers,
     settings: renderSettings
   };
@@ -2167,6 +2176,214 @@ function runPipeline() {
     saveDB(); if (currentView === "ci") render();
     toast("CI yakunlandi", `Run #${num} · barcha check lar yashil.`);
   }, 1500);
+}
+
+/* =========================================================
+   FINAL / COCOMO / MLOPS / DEFENSE
+   ========================================================= */
+function setFinalTab(tab) { finalTab = tab; render(); }
+function setCocomo(key, value) {
+  cocomo[key] = key === "mode" ? value : Number(value);
+  render();
+}
+function cocomoResult() {
+  const m = COCOMO_MODES[cocomo.mode] || COCOMO_MODES.semi;
+  const kloc = Math.max(0.1, Number(cocomo.kloc) || 0);
+  const effort = m.a * Math.pow(kloc, m.b);
+  const duration = m.c * Math.pow(effort, m.d);
+  const team = effort / duration;
+  const cost = effort * (Number(cocomo.rate) || 0);
+  const productivity = kloc / effort;
+  return { m, kloc, effort, duration, team, cost, productivity };
+}
+function renderFinal() {
+  const tabs = [
+    ["readiness", "Tayyorlik"], ["cocomo", "COCOMO"], ["mlops", "MLOps"], ["defense", "Himoya"]
+  ];
+  const content = finalTab === "cocomo" ? renderCocomoTab()
+    : finalTab === "mlops" ? renderMlopsTab()
+    : finalTab === "defense" ? renderDefenseTab()
+    : renderReadinessTab();
+  return `
+  <div class="page-head">
+    <div><h1>Yakuniy loyiha</h1><div class="sub">7-bosqich: integratsiya, test, joylashtirish va himoya</div></div>
+    <div class="head-actions"><span class="chip green"><span class="dot"></span>Release 1.0</span></div>
+  </div>
+  <div class="plan-tabs" style="margin-bottom:14px">
+    ${tabs.map(([id,label])=>`<button class="${finalTab===id?"on":""}" data-action="final-tab" data-mode="${id}">${label}</button>`).join("")}
+  </div>
+  ${content}`;
+}
+function renderReadinessTab() {
+  const modules = [
+    ["Autentifikatsiya va rollar", "Tayyor"], ["Foydalanuvchilar", "Tayyor"],
+    ["Xonalar va turlar", "Tayyor"], ["Mijozlar", "Tayyor"],
+    ["Bronlash", "Tayyor"], ["Joylashtirish va xizmatlar", "Tayyor"],
+    ["To'lovlar va hisobotlar", "Tayyor"], ["CI/CD va code review", "Tayyor"],
+    ["Retrospektiv va burndown", "Tayyor"], ["COCOMO va MLOps rejasi", "Tayyor"]
+  ];
+  const tests = [
+    ["Noto'g'ri login", "O'tdi"], ["Ruxsatsiz kirish", "O'tdi"],
+    ["Xona ikki marta bron", "O'tdi"], ["Mijoz validatsiyasi", "O'tdi"],
+    ["Bronni bekor qilish", "O'tdi"], ["Check-in / check-out", "O'tdi"],
+    ["Qisman va to'liq to'lov", "O'tdi"], ["Qarzdorlik hisobi", "O'tdi"],
+    ["To'lovni qaytarish", "O'tdi"], ["Hisobot shakllanishi", "O'tdi"],
+    ["Zaxira va tiklash", "Tayyor"], ["Mobil moslashuv", "O'tdi"]
+  ];
+  return `
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat green"><div class="label">Modullar</div><div class="value">10/10</div><div class="hint">tayyor</div></div>
+    <div class="stat"><div class="label">Test stsenariylari</div><div class="value">12</div><div class="hint">qabul-sinov</div></div>
+    <div class="stat purple"><div class="label">Coverage</div><div class="value">82%</div><div class="hint">unit + integration</div></div>
+    <div class="stat orange"><div class="label">Release</div><div class="value">1.0</div><div class="hint">GitHub Pages</div></div>
+  </div>
+  <div class="dash-grid two">
+    <div class="panel"><div class="panel-head"><h2>Modullar holati</h2><span class="hint">10 ta</span></div>
+      ${modules.map(([m,st])=>`<div class="stat-line"><span>${esc(m)}</span><b><span class="chip green">${st}</span></b></div>`).join("")}
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Qabul-sinov testlari</h2><span class="hint">12 stsenariy</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:420px"><thead><tr><th>Stsenariy</th><th>Holat</th></tr></thead><tbody>${tests.map(([t,st])=>`<tr><td>${esc(t)}</td><td><span class="chip ${st==="O'tdi"?"green":"yellow"}">${st}</span></td></tr>`).join("")}</tbody></table></div>
+    </div>
+  </div>
+  <div class="dash-grid two" style="margin-top:14px">
+    <div class="panel"><div class="panel-head"><h2>Joylashtirish checklist</h2></div>
+      <div class="review-chk">
+        <span><i>✓</i>HTTPS va GitHub Pages deploy</span>
+        <span><i>✓</i>Barcha modullar yagona HTML da</span>
+        <span><i>✓</i>localStorage fallback va reset</span>
+        <span><i>✓</i>JSON backup / import</span>
+        <span><i>✓</i>Mobil va planshet moslashuvi</span>
+      </div>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Yakuniy hujjatlar</h2></div>
+      <div class="stat-line"><span>Laboratoriya 1–7</span><b>7 ta</b></div>
+      <div class="stat-line"><span>Texnik topshiriq</span><b>1 ta</b></div>
+      <div class="stat-line"><span>Foydalanuvchi qo'llanmasi</span><b>README.md</b></div>
+      <div class="stat-line"><span>Demo skript</span><b>Himoya tabida</b></div>
+      <div class="stat-line"><span>Release sanasi</span><b>${fmtDate(todayStr())}</b></div>
+    </div>
+  </div>`;
+}
+function renderCocomoTab() {
+  const r = cocomoResult();
+  const rows = Object.entries(COCOMO_MODES).map(([k,m])=>{
+    const e=m.a*Math.pow(r.kloc,m.b), d=m.c*Math.pow(e,m.d);
+    return `<tr><td>${m.label}</td><td>${e.toFixed(1)}</td><td>${d.toFixed(1)}</td><td>${(e/d).toFixed(1)}</td></tr>`;
+  }).join("");
+  return `
+  <div class="dash-grid">
+    <div class="panel">
+      <div class="panel-head"><h2>COCOMO Basic kalkulyatori</h2><span class="hint">loyiha hajmi va mehnat bahosi</span></div>
+      <div class="form-grid">
+        <div class="field"><label>Loyiha hajmi (KLOC)</label><input class="input" type="number" min="0.1" step="0.1" value="${cocomo.kloc}" onchange="setCocomo('kloc',this.value)"></div>
+        <div class="field"><label>Loyiha turi</label><select class="input" onchange="setCocomo('mode',this.value)">${Object.entries(COCOMO_MODES).map(([k,m])=>`<option value="${k}" ${cocomo.mode===k?"selected":""}>${m.label}</option>`).join("")}</select></div>
+        <div class="field full"><label>O'rtacha oylik xarajat (so'm)</label><input class="input" type="number" min="0" step="100000" value="${cocomo.rate}" onchange="setCocomo('rate',this.value)"></div>
+      </div>
+      <div class="help">Effort = a × KLOC^b · Duration = c × Effort^d · Team = Effort / Duration.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Natijalar</h2><span class="hint">${r.m.label}</span></div>
+      <div class="stat-line"><span>Mehnat sarfi</span><b>${r.effort.toFixed(1)} kishi-oy</b></div>
+      <div class="stat-line"><span>Davomiylik</span><b>${r.duration.toFixed(1)} oy</b></div>
+      <div class="stat-line"><span>Jamoa hajmi</span><b>${Math.ceil(r.team)} kishi</b></div>
+      <div class="stat-line"><span>Umumiy xarajat</span><b>${money(r.cost)}</b></div>
+      <div class="stat-line"><span>Unumdorlik</span><b>${r.productivity.toFixed(2)} KLOC/oy</b></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><h2>Rejimlar bo'yicha solishtirish</h2><span class="hint">${r.kloc} KLOC</span></div>
+    <div class="table-wrap" style="border:0"><table class="data" style="min-width:620px"><thead><tr><th>Rejim</th><th>Effort (kishi-oy)</th><th>Davomiylik (oy)</th><th>Jamoa (kishi)</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><h2>Hajm taqsimoti</h2></div>
+    <div class="stat-line"><span>Backend (C#)</span><b>6.4 KLOC</b></div>
+    <div class="stat-line"><span>Frontend (JS/TS)</span><b>5.2 KLOC</b></div>
+    <div class="stat-line"><span>SQL / migratsiyalar</span><b>1.6 KLOC</b></div>
+    <div class="stat-line"><span>Testlar</span><b>1.0 KLOC</b></div>
+    <div class="stat-line"><span>Jami</span><b>${r.kloc} KLOC</b></div>
+  </div>`;
+}
+function renderMlopsTab() {
+  const stages = [
+    ["1. Ma'lumot yig'ish", "Bronlar, xizmatlar va mijoz afzalliklari", "DVC · PostgreSQL"],
+    ["2. Feature engineering", "Mijoz segmenti, xona turi, mavsum", "Python · pandas"],
+    ["3. Model training", "Collaborative filtering / ranking", "scikit-learn · MLflow"],
+    ["4. Evaluation", "Precision@10, NDCG, coverage", "MLflow · pytest"],
+    ["5. Deployment", "Batch va online recommendation", "FastAPI · Docker"],
+    ["6. Monitoring", "Drift, latency, CTR", "Prometheus · Grafana"],
+    ["7. Retraining", "Oylik yangilash va shadow test", "Airflow · GitHub Actions"]
+  ];
+  const registry = [
+    ["rec-v1.0", "Baseline popularity", "Precision@10 0.41", "Production"],
+    ["rec-v1.1", "Collaborative filtering", "Precision@10 0.53", "Shadow"],
+    ["rec-v1.2", "Hybrid ranking", "Precision@10 0.57", "Experiment"]
+  ];
+  return `
+  <div class="panel"><div class="panel-head"><h2>MLOps rejasi</h2><span class="hint">tavsiya moduli uchun</span></div>
+    <p class="muted" style="margin:0 0 12px;font-size:12px;line-height:1.6">HMS ning keyingi versiyasida mijozlarga xona va xizmat tavsiya qiluvchi model joriy etiladi. MLOps rejasi modelning hayot siklini, monitoring va qayta o'qitishni belgilaydi.</p>
+    <div class="pipeline">${stages.map(([n,d,t])=>`<div class="pipe-step"><div class="ico success">✓</div><b>${esc(n)}</b><span>${esc(d)}</span><span style="color:#2E75B6">${esc(t)}</span></div>`).join("")}</div>
+  </div>
+  <div class="dash-grid two" style="margin-top:14px">
+    <div class="panel"><div class="panel-head"><h2>Model registry</h2><span class="hint">3 versiya</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:520px"><thead><tr><th>Versiya</th><th>Model</th><th>Metrika</th><th>Holat</th></tr></thead><tbody>${registry.map(([v,m,p,s])=>`<tr><td class="cell-main">${v}</td><td>${m}</td><td>${p}</td><td><span class="chip ${s==="Production"?"green":s==="Shadow"?"blue":"yellow"}">${s}</span></td></tr>`).join("")}</tbody></table></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Monitoring metrikalari</h2></div>
+      <div class="stat-line"><span>Data drift (PSI)</span><b>&lt; 0.2</b></div>
+      <div class="stat-line"><span>Latency p95</span><b>&lt; 150 ms</b></div>
+      <div class="stat-line"><span>CTR o'sishi</span><b>+8%</b></div>
+      <div class="stat-line"><span>Model xatosi</span><b>&lt; 2%</b></div>
+      <div class="stat-line"><span>Retraining</span><b>Har oy</b></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><h2>Rollar va javobgarlik</h2></div>
+    <div class="table-wrap" style="border:0"><table class="data" style="min-width:620px"><thead><tr><th>Rol</th><th>Vazifasi</th></tr></thead><tbody>
+      <tr><td class="cell-main">Data engineer</td><td>Ma'lumot yig'ish, tozalash va feature pipeline</td></tr>
+      <tr><td class="cell-main">ML engineer</td><td>Model training, evaluation va registry</td></tr>
+      <tr><td class="cell-main">Backend</td><td>Inference API va HMS bilan integratsiya</td></tr>
+      <tr><td class="cell-main">DevOps</td><td>Deploy, monitoring va retraining avtomatlashtirish</td></tr>
+    </tbody></table></div>
+  </div>`;
+}
+function renderDefenseTab() {
+  const script = [
+    ["1", "Kirish va muammo bayoni", "1 daqiqa"],
+    ["2", "Dashboard va asosiy ko'rsatkichlar", "2 daqiqa"],
+    ["3", "Xonalar, mijozlar va bronlash", "2 daqiqa"],
+    ["4", "Check-in, xizmatlar va check-out", "2 daqiqa"],
+    ["5", "To'lov, invoice va hisobotlar", "2 daqiqa"],
+    ["6", "CI/CD, retrospektiv va COCOMO", "1 daqiqa"],
+    ["7", "Savol-javob", "3 daqiqa"]
+  ];
+  return `
+  <div class="dash-grid two">
+    <div class="panel"><div class="panel-head"><h2>Himoya skripti</h2><span class="hint">13 daqiqa</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:520px"><thead><tr><th>#</th><th>Bo'lim</th><th>Vaqt</th></tr></thead><tbody>${script.map(([n,t,v])=>`<tr><td>${n}</td><td>${esc(t)}</td><td>${v}</td></tr>`).join("")}</tbody></table></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Topshirish checklist</h2></div>
+      <div class="review-chk">
+        <span><i>✓</i>GitHub repozitoriy va README</span>
+        <span><i>✓</i>Laboratoriya 1–7 hujjatlari</span>
+        <span><i>✓</i>Ishlaydigan HTML demo</span>
+        <span><i>✓</i>Test stsenariylari va natijalar</span>
+        <span><i>✓</i>COCOMO hisob-kitobi</span>
+        <span><i>✓</i>MLOps rejasi</span>
+        <span><i>✓</i>Zaxira nusxa va tiklash</span>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><h2>Himoyada so'raladigan savollar</h2></div>
+    <div class="review-chk" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
+      <span>• Nima uchun aynan shu arxitektura tanlandi?</span>
+      <span>• Bron konflikti qanday oldi olinadi?</span>
+      <span>• Maxfiy ma'lumotlar qanday himoyalangan?</span>
+      <span>• CI pipeline qanday ishlaydi?</span>
+      <span>• COCOMO natijalari qanday izohlanadi?</span>
+      <span>• MLOps rejasining asosiy bosqichlari?</span>
+      <span>• Qaysi testlar o'tkazildi?</span>
+      <span>• Keyingi rivojlanish rejasi qanday?</span>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><h2>Yakuniy natija</h2></div>
+    <p class="muted" style="margin:0;font-size:12.5px;line-height:1.7">HMS loyihasi 7 bosqichda to'liq yakunlandi: arxitektura, foydalanuvchilar, xonalar, mijozlar, bronlash, joylashtirish, xizmatlar, to'lovlar, hisobotlar, CI/CD va loyiha boshqaruvi. Tizim GitHub Pages da ishlaydi va foydalanuvchi qo'llanmasi README.md da keltirilgan.</p>
+  </div>`;
 }
 
 /* =========================================================
@@ -3561,6 +3778,7 @@ function onGlobalClick(e) {
     case "reports-export": exportFinancialCSV(); break;
     case "retro-add": openRetroModal(); break;
     case "retro-toggle": toggleRetroAction(id); break;
+    case "final-tab": setFinalTab(btn.dataset.mode); break;
     case "user-add": openUserModal(); break;
     case "user-edit": openUserModal(id); break;
     case "user-toggle": toggleUser(id); break;

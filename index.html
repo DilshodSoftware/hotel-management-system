@@ -212,6 +212,7 @@
   .view-toggle{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
   .view-toggle button{height:38px;width:42px;border:0;background:#fff;color:var(--muted);display:grid;place-items:center}
   .view-toggle button.on{background:var(--navy);color:#fff}
+  .view-toggle.text button{width:auto;padding:0 13px;font-size:11.5px;font-weight:600}
   .table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
   table.data{width:100%;border-collapse:collapse;min-width:760px}
   table.data th{background:#F2F6FB;color:#5B6B80;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
@@ -574,7 +575,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const DB_KEY = "hms_app_v1";
 const SESSION_KEY = "hms_session_v1";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 function icon(name, size = 18) {
   return `<svg class="icon" width="${size}" height="${size}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
@@ -692,13 +693,14 @@ const ABILITIES = {
             "client.create","client.edit","client.sensitive","client.export",
             "booking.create","booking.checkin","booking.checkout","booking.cancel",
             "payment.create","sprint.manage","plan.manage","stay.checkin","stay.checkout",
-            "service.manage","service.order","ci.run"],
+            "service.manage","service.order","ci.run","retro.manage","finance.export"],
   receptionist: ["room.status","client.create","booking.create","booking.edit","booking.confirm","booking.checkin","booking.checkout","booking.cancel","stay.checkin","stay.checkout","service.order"],
   accountant: ["payment.create"]
 };
 const NAV = [
   { id:"dashboard", label:"Dashboard", icon:"grid", roles:["admin","manager","receptionist","accountant"] },
   { id:"sprint", label:"Sprintlar", icon:"cards", roles:["admin","manager"] },
+  { id:"retro", label:"Retrospektiv", icon:"refresh", roles:["admin","manager"] },
   { id:"plan", label:"Reja va risklar", icon:"calendar", roles:["admin","manager"] },
   { id:"rooms", label:"Xonalar", icon:"bed", roles:["admin","manager","receptionist"] },
   { id:"room-types", label:"Xona turlari", icon:"layers", roles:["admin","manager"] },
@@ -707,6 +709,7 @@ const NAV = [
   { id:"stays", label:"Joylashtirish", icon:"building", roles:["admin","manager","receptionist"] },
   { id:"services", label:"Xizmatlar", icon:"layers", roles:["admin","manager","receptionist"] },
   { id:"payments", label:"To'lovlar", icon:"card", roles:["admin","manager","accountant"] },
+  { id:"reports", label:"Hisobotlar", icon:"grid", roles:["admin","manager","accountant"] },
   { id:"ci", label:"CI/CD", icon:"shield", roles:["admin","manager"] },
   { id:"users", label:"Foydalanuvchilar", icon:"shield", roles:["admin"] },
   { id:"settings", label:"Sozlamalar", icon:"settings", roles:["admin"] }
@@ -727,13 +730,14 @@ let bookingView = "table";
 let clientQuery = "";
 let clientFilter = "all";
 let paymentQuery = "";
+let paymentView = "payments";
 
 function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      if (data && (data.version === 1 || data.version === 2 || data.version === 3)) return migrateDB(data);
+      if (data && [1,2,3,4].includes(data.version)) return migrateDB(data);
       if (data && data.version === DB_VERSION) return data;
     }
   } catch {}
@@ -770,6 +774,9 @@ function migrateDB(d) {
   d.serviceOrders = d.serviceOrders || fresh.serviceOrders;
   d.ciRuns = d.ciRuns || fresh.ciRuns;
   d.prReviews = d.prReviews || fresh.prReviews;
+  d.invoices = d.invoices || fresh.invoices;
+  d.refunds = d.refunds || fresh.refunds;
+  d.retro = d.retro || fresh.retro;
   d.version = DB_VERSION;
   return d;
 }
@@ -1029,8 +1036,59 @@ function seedDB() {
     { number:48, title:"HMS-203: Check-out va hisob-kitob", branch:"feature/HMS-203-checkout",
       author:"Dilshod I.", reviewer:"Shahnoza Q.", status:"review", comments:2, checks:"4/6", updated:todayStr() }
   ];
+  const invoices = [
+    { id:"inv1", number:"INV-2026-001", stayId:"stay1", bookingId:"b1", customerId:"c1",
+      issueDate:day(-1), dueDate:day(1), status:"partial", tax:0, discount:0,
+      items:[
+        { type:"room", description:"201-xona · 2 kecha", quantity:2, unitPrice:850000, total:1700000 },
+        { type:"service", description:"Nonushta", quantity:2, unitPrice:45000, total:90000 }
+      ] },
+    { id:"inv2", number:"INV-2026-002", stayId:"stay2", bookingId:"b4", customerId:"c4",
+      issueDate:day(-2), dueDate:t, status:"partial", tax:0, discount:0,
+      items:[
+        { type:"room", description:"302-xona · 2 kecha", quantity:2, unitPrice:850000, total:1700000 },
+        { type:"service", description:"Avtoturargoh", quantity:2, unitPrice:20000, total:40000 }
+      ] },
+    { id:"inv3", number:"INV-2026-003", stayId:"stay3", bookingId:"b6", customerId:"c6",
+      issueDate:day(-3), dueDate:day(-1), status:"partial", tax:0, discount:0,
+      items:[
+        { type:"room", description:"303-xona · 2 kecha", quantity:2, unitPrice:1100000, total:2200000 },
+        { type:"service", description:"Kir yuvish", quantity:3, unitPrice:25000, total:75000 }
+      ] }
+  ];
+  const refunds = [];
+  const retro = {
+    sprintName:"Sprint 3 · Mijozlar moduli", planned:20, completed:20,
+    days:[
+      { day:0, ideal:20, actual:20 }, { day:1, ideal:18, actual:19 },
+      { day:2, ideal:16, actual:18 }, { day:3, ideal:14, actual:18 },
+      { day:4, ideal:12, actual:15 }, { day:5, ideal:10, actual:13 },
+      { day:6, ideal:8,  actual:13 }, { day:7, ideal:6,  actual:10 },
+      { day:8, ideal:4,  actual:7 },  { day:9, ideal:2,  actual:4 },
+      { day:10, ideal:0, actual:0 }
+    ],
+    well:[
+      "PR lar kichik bo'ldi, review 24 soat ichida yakunlandi",
+      "CI pipeline barqaror ishladi va xatoni erta ko'rsatdi",
+      "Kunlik stand-up 15 daqiqada o'tdi",
+      "Mijozlar moduli bo'yicha testlar 82% qamrovga yetdi"
+    ],
+    problems:[
+      "Sprint o'rtasida 3 point hajm qo'shildi, burndown yuqoriga sakradi",
+      "PostgreSQL testlari ikki marta beqaror o'tdi",
+      "Check-out hisobida xizmat summasi tushib qoldi (PR #47)",
+      "Hujjatlar sprint oxiriga qoldirildi"
+    ],
+    actions:[
+      { id:"act1", title:"Scope freeze: sprint o'rtasida yangi story qabul qilmaslik", owner:"Shahnoza Q.", due:day(7), status:"Ochiq" },
+      { id:"act2", title:"PostgreSQL healthcheck va test izolyatsiyasini tuzatish", owner:"Bekzod E.", due:day(3), status:"Ochiq" },
+      { id:"act3", title:"Check-out hisobi uchun qo'shimcha test yozish", owner:"Dilshod I.", due:day(5), status:"Bajarildi" },
+      { id:"act4", title:"PR ni 24 soat ichida review qilish qoidasi", owner:"Jamoa", due:day(10), status:"Ochiq" }
+    ]
+  };
   return { version:DB_VERSION, roomTypes:types, amenities, rooms, clients, bookings, payments, users,
-    sprints, issues, prs, project, risks, services, stays, serviceOrders, ciRuns, prReviews, activity:[] };
+    sprints, issues, prs, project, risks, services, stays, serviceOrders, ciRuns, prReviews,
+    invoices, refunds, retro, activity:[] };
 }
 
 /* =========================================================
@@ -1058,6 +1116,27 @@ function roomBusy(roomId, checkIn, checkOut, excludeId) {
     b.checkIn < checkOut && checkIn < b.checkOut
   );
 }
+function invoice(id) { return (db.invoices || []).find(i => i.id === id); }
+function invoiceTotal(inv) {
+  if (!inv) return 0;
+  const items = (inv.items || []).reduce((s, x) => s + Number(x.total || 0), 0);
+  return Math.max(0, items + Number(inv.tax || 0) - Number(inv.discount || 0));
+}
+function invoicePaid(inv) {
+  if (!inv) return 0;
+  return (db.payments || []).filter(p => p.bookingId === inv.bookingId && p.status === "paid")
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+}
+function invoiceBalance(inv) { return Math.max(0, invoiceTotal(inv) - invoicePaid(inv)); }
+function invoiceStatus(inv) {
+  const bal = invoiceBalance(inv), paid = invoicePaid(inv);
+  if (bal <= 0) return { label:"To'langan", cls:"green" };
+  if (paid > 0) return { label:"Qisman", cls:"orange" };
+  if (inv.dueDate && inv.dueDate < todayStr()) return { label:"Muddati o'tgan", cls:"red" };
+  return { label:"Berilgan", cls:"blue" };
+}
+function invoiceOfStay(stayId) { return (db.invoices || []).find(i => i.stayId === stayId); }
+
 function nowLocal(d = new Date()) {
   const p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -1251,6 +1330,8 @@ function render() {
     stays: renderStays,
     services: renderServices,
     payments: renderPayments,
+    reports: renderReports,
+    retro: renderRetro,
     ci: renderCI,
     users: renderUsers,
     settings: renderSettings
@@ -1802,6 +1883,30 @@ function saveCheckOut(form) {
   saveDB(); closeModal(); render();
   toast("Check-out yakunlandi", `${st.code} · xona tozalashga o'tdi.`);
 }
+function openInvoiceForStay(stayId) {
+  const st = stay(stayId); if (!st) return;
+  let inv = invoiceOfStay(stayId);
+  if (!inv) {
+    const b = booking(st.bookingId), r = room(st.roomId);
+    if (!b) return;
+    let max = 0;
+    (db.invoices||[]).forEach(x=>{const m=String(x.number).match(/(\d+)$/); if(m) max=Math.max(max,+m[1]);});
+    const items = [{
+      type:"room", description:`${r?r.roomNumber:""}-xona · ${nights(b.checkIn,b.checkOut)} kecha`,
+      quantity:1, unitPrice:Number(b.total), total:Number(b.total)
+    }];
+    stayServices(st.id).forEach(o=>{const sv=service(o.serviceId); items.push({
+      type:"service", description:sv?sv.name:"Xizmat", quantity:o.quantity, unitPrice:o.unitPrice, total:o.total
+    });});
+    inv = { id:uid("inv"), number:"INV-"+new Date().getFullYear()+"-"+String(max+1).padStart(3,"0"),
+      stayId:st.id, bookingId:b.id, customerId:st.customerId, issueDate:todayStr(), dueDate:b.checkOut,
+      status:"issued", tax:0, discount:0, items };
+    db.invoices.push(inv);
+    log("INVOICE_CREATED", `${inv.number} · ${money(invoiceTotal(inv))}`);
+    saveDB();
+  }
+  openInvoiceDetails(inv.id);
+}
 function openStayDetails(id) {
   const st = stay(id); if (!st) return;
   const b = booking(st.bookingId), c = client(st.customerId), r = room(st.roomId);
@@ -1830,6 +1935,7 @@ function openStayDetails(id) {
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" type="button" onclick="closeModal()">Yopish</button>
+      <button class="btn btn-secondary" type="button" onclick="closeModal();openInvoiceForStay('${st.id}')">Hisob-faktura</button>
       ${st.status==="in_house"&&can("service.order")?`<button class="btn btn-secondary" type="button" onclick="closeModal();openServiceOrderModal('${st.id}')">Xizmat qo'shish</button>`:""}
       ${st.status==="in_house"&&can("stay.checkout")?`<button class="btn btn-primary" type="button" onclick="closeModal();openCheckOutModal('${st.id}')">Check-out</button>`:""}
     </div>`, "wide");
@@ -2393,41 +2499,258 @@ function setBookingFilter(k, v) {
    ========================================================= */
 function renderPayments() {
   const arr = [...db.payments].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const invoices = [...(db.invoices || [])].sort((a,b) => String(b.issueDate).localeCompare(String(a.issueDate)));
   const filtered = arr.filter(p => {
     if (!paymentQuery) return true;
     const q = paymentQuery.toLowerCase();
     const b = booking(p.bookingId), c = b ? client(b.clientId) : null;
-    return (b && b.code.toLowerCase().includes(q)) || (c && clientName(c).toLowerCase().includes(q));
+    const inv = invoices.find(i => i.bookingId === p.bookingId);
+    return (b && b.code.toLowerCase().includes(q)) || (c && clientName(c).toLowerCase().includes(q)) ||
+      (inv && inv.number.toLowerCase().includes(q));
   });
   const totalPaid = arr.filter(p => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
   const thisMonth = arr.filter(p => p.status === "paid" && p.date.startsWith(monthKey())).reduce((s, p) => s + Number(p.amount), 0);
-  const debt = db.bookings.filter(b => !["cancelled","no_show"].includes(b.status)).reduce((s, b) => s + bookingBalance(b), 0);
+  const debt = invoices.reduce((s, inv) => s + invoiceBalance(inv), 0);
   return `
   <div class="page-head">
-    <div><h1>To'lovlar</h1><div class="sub">To'lovlar, avanslar va qarzdorlik nazorati</div></div>
-    ${can("payment.create") ? `<button class="btn btn-primary" data-action="payment-add">${icon("plus",16)} To'lov qayd etish</button>` : ""}
+    <div><h1>Moliya</h1><div class="sub">To'lovlar, hisob-fakturalar va qarzdorlik nazorati</div></div>
+    <div class="head-actions">
+      <div class="view-toggle text">
+        <button class="${paymentView==="payments"?"on":""}" data-action="payment-view" data-mode="payments">To'lovlar</button>
+        <button class="${paymentView==="invoices"?"on":""}" data-action="payment-view" data-mode="invoices">Hisob-fakturalar</button>
+      </div>
+      ${can("payment.create") ? `<button class="btn btn-primary" data-action="payment-add">${icon("plus",16)} To'lov</button>` : ""}
+    </div>
   </div>
-  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat green"><div class="sicon">${icon("money",18)}</div><div class="label">Jami tushum</div><div class="value" style="font-size:22px">${money(totalPaid)}</div><div class="hint">Barcha to'langan summalar</div></div>
-    <div class="stat"><div class="sicon">${icon("calendar",18)}</div><div class="label">Shu oy</div><div class="value" style="font-size:22px">${money(thisMonth)}</div><div class="hint">${MONTHS[new Date().getMonth()]} oyi</div></div>
-    <div class="stat red"><div class="sicon">${icon("alert",18)}</div><div class="label">Qarzdorlik</div><div class="value" style="font-size:22px">${money(debt)}</div><div class="hint">Faol bronlar bo'yicha</div></div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat green"><div class="sicon">${icon("money",18)}</div><div class="label">Jami tushum</div><div class="value" style="font-size:21px">${money(totalPaid)}</div><div class="hint">To'langan summalar</div></div>
+    <div class="stat"><div class="sicon">${icon("calendar",18)}</div><div class="label">Shu oy</div><div class="value" style="font-size:21px">${money(thisMonth)}</div><div class="hint">${MONTHS[new Date().getMonth()]} oyi</div></div>
+    <div class="stat purple"><div class="sicon">${icon("card",18)}</div><div class="label">Hisob-fakturalar</div><div class="value">${invoices.length}</div><div class="hint">${invoices.filter(i=>invoiceBalance(i)>0).length} ta qarzdor</div></div>
+    <div class="stat red"><div class="sicon">${icon("alert",18)}</div><div class="label">Qarzdorlik</div><div class="value" style="font-size:21px">${money(debt)}</div><div class="hint">Barcha hisoblar bo'yicha</div></div>
   </div>
   <div class="toolbar">
-    <div class="search">${icon("search",17)}<input class="input" id="paymentSearch" placeholder="Bron kodi yoki mijoz..." value="${esc(paymentQuery)}" oninput="setPaymentQuery(this.value)"></div>
-    <div class="small muted">${filtered.length} ta to'lov</div>
+    <div class="search">${icon("search",17)}<input class="input" id="paymentSearch" placeholder="Hisob raqami, bron kodi yoki mijoz..." value="${esc(paymentQuery)}" oninput="setPaymentQuery(this.value)"></div>
+    <div class="small muted">${paymentView==="invoices"?invoices.length+" ta hisob":filtered.length+" ta to'lov"}</div>
   </div>
-  <div class="table-wrap"><table class="data">
-    <thead><tr><th>Sana</th><th>Bron</th><th>Mijoz</th><th>Xona</th><th>Summa</th><th>Usul</th><th>Holat</th><th>Izoh</th></tr></thead>
+  ${paymentView === "invoices" ? `<div class="table-wrap"><table class="data">
+    <thead><tr><th>Hisob</th><th>Mijoz</th><th>Xona</th><th>Berilgan</th><th>Jami</th><th>To'langan</th><th>Qoldiq</th><th>Holat</th><th>Amallar</th></tr></thead>
+    <tbody>${invoices.map(inv => {
+      const c = client(inv.customerId), b = booking(inv.bookingId), r = b ? room(b.roomId) : null;
+      const st = invoiceStatus(inv);
+      return `<tr><td><button class="link-btn" style="font-size:12.5px" data-action="invoice-open" data-id="${inv.id}">${esc(inv.number)}</button></td>
+        <td><div class="cell-main">${esc(clientName(c))}</div><div class="cell-sub">${esc(b?b.code:"")}</div></td>
+        <td>${esc(r?r.roomNumber:"—")}</td><td class="nowrap">${fmtDate(inv.issueDate)}</td>
+        <td class="money">${money(invoiceTotal(inv))}</td><td>${money(invoicePaid(inv))}</td>
+        <td>${invoiceBalance(inv)>0?`<span style="color:var(--red);font-weight:700">${money(invoiceBalance(inv))}</span>`:`<span style="color:var(--green);font-weight:700">To'langan</span>`}</td>
+        <td><span class="chip ${st.cls}">${st.label}</span></td>
+        <td><div class="actions">
+          <button class="icon-btn" title="Ko'rish" data-action="invoice-open" data-id="${inv.id}">${icon("eye",16)}</button>
+          <button class="icon-btn" title="Chop etish" data-action="invoice-print" data-id="${inv.id}">${icon("download",16)}</button>
+          ${can("payment.create") && invoiceBalance(inv)>0 ? `<button class="icon-btn" title="To'lov" data-action="payment-add" data-booking="${inv.bookingId}">${icon("card",16)}</button>` : ""}
+        </div></td></tr>`;
+    }).join("")}</tbody></table></div>` : `<div class="table-wrap"><table class="data">
+    <thead><tr><th>Sana</th><th>Bron / hisob</th><th>Mijoz</th><th>Xona</th><th>Summa</th><th>Usul</th><th>Holat</th><th>Izoh</th><th>Amal</th></tr></thead>
     <tbody>${filtered.map(p => {
       const b = booking(p.bookingId), c = b ? client(b.clientId) : null, r = b ? room(b.roomId) : null;
-      return `<tr><td class="nowrap">${fmtDate(p.date)}</td><td><button class="link-btn" data-action="booking-open" data-id="${b ? b.id : ""}">${esc(b ? b.code : "—")}</button></td><td>${esc(c ? clientName(c) : "—")}</td><td>${esc(r ? r.roomNumber : "—")}</td><td class="money">${money(p.amount)}</td><td>${p.method === "card" ? "Karta" : p.method === "cash" ? "Naqd" : "O'tkazma"}</td><td>${p.status === "paid" ? `<span class="chip green"><span class="dot"></span>To'langan</span>` : `<span class="chip yellow">Kutilmoqda</span>`}</td><td class="muted">${esc(p.note || "—")}</td></tr>`;
-    }).join("")}</tbody></table></div>`;
+      const inv = invoices.find(i => i.bookingId === p.bookingId);
+      return `<tr><td class="nowrap">${fmtDate(p.date)}</td><td><button class="link-btn" data-action="invoice-open" data-id="${inv?inv.id:""}">${esc(inv?inv.number:b?b.code:"—")}</button></td><td>${esc(c ? clientName(c) : "—")}</td><td>${esc(r ? r.roomNumber : "—")}</td><td class="money">${money(p.amount)}</td><td>${p.method === "card" ? "Karta" : p.method === "cash" ? "Naqd" : "O'tkazma"}</td><td>${p.status === "paid" ? `<span class="chip green">To'langan</span>` : `<span class="chip red">Qaytarilgan</span>`}</td><td class="muted">${esc(p.note || "—")}</td><td>${p.status==="paid" && can("payment.create")?`<button class="link-btn danger" data-action="payment-refund" data-id="${p.id}">Qaytarish</button>`:"—"}</td></tr>`;
+    }).join("")}</tbody></table></div>`}`;
 }
 function setPaymentQuery(v) {
   paymentQuery = v;
   render();
   const el = $("#paymentSearch");
   if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+}
+function setPaymentView(v) { paymentView = v; render(); }
+
+function openInvoiceDetails(id) {
+  const inv = invoice(id); if (!inv) return;
+  const c = client(inv.customerId), b = booking(inv.bookingId), r = b ? room(b.roomId) : null;
+  const st = invoiceStatus(inv);
+  const pays = (db.payments || []).filter(p => p.bookingId === inv.bookingId);
+  openModal(`
+    ${modalHead(`${inv.number}`, `${esc(clientName(c))} · ${esc(r?r.roomNumber:"")}-xona`)}
+    <div class="modal-body">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"><span class="chip ${st.cls}">${st.label}</span><span class="chip gray">${fmtDate(inv.issueDate)}</span><span class="chip ${invoiceBalance(inv)>0?"red":"green"}">Qoldiq: ${money(invoiceBalance(inv))}</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:520px"><thead><tr><th>Tavsif</th><th>Miqdor</th><th>Narx</th><th>Summa</th></tr></thead><tbody>${(inv.items||[]).map(x=>`<tr><td>${esc(x.description)}</td><td>${x.quantity}</td><td>${money(x.unitPrice)}</td><td class="money">${money(x.total)}</td></tr>`).join("")}</tbody></table></div>
+      <div class="stat-line" style="margin-top:12px"><span>Jami</span><b>${money(invoiceTotal(inv))}</b></div>
+      <div class="stat-line"><span>To'langan</span><b style="color:var(--green)">${money(invoicePaid(inv))}</b></div>
+      <div class="stat-line"><span>Qoldiq</span><b style="color:${invoiceBalance(inv)>0?"var(--red)":"var(--green)"}">${money(invoiceBalance(inv))}</b></div>
+      <div class="divider"></div>
+      <div class="panel-head"><h2 style="font-size:13px">To'lovlar</h2></div>
+      ${pays.length?pays.map(p=>`<div class="list-row"><div class="list-ava">${icon("card",14)}</div><div class="list-main"><b>${money(p.amount)}</b><span>${fmtDate(p.date)} · ${p.method==="card"?"Karta":p.method==="cash"?"Naqd":"O'tkazma"} · ${p.status==="paid"?"To'langan":"Qaytarilgan"}</span></div></div>`).join(""):`<div class="empty">To'lovlar yo'q</div>`}
+    </div>
+    <div class="modal-foot"><button class="btn btn-secondary" type="button" onclick="printInvoice('${inv.id}')">${icon("download",15)} Chop etish</button><button class="btn btn-secondary" type="button" onclick="closeModal()">Yopish</button>${can("payment.create") && invoiceBalance(inv)>0?`<button class="btn btn-primary" type="button" onclick="closeModal();openPaymentModal('${inv.bookingId}')">To'lov qo'shish</button>`:""}</div>`, "wide");
+}
+function printInvoice(id) {
+  const inv = invoice(id); if (!inv) return;
+  const c = client(inv.customerId), b = booking(inv.bookingId), r = b ? room(b.roomId) : null;
+  const rows = (inv.items||[]).map(x=>`<tr><td>${x.description}</td><td>${x.quantity}</td><td>${money(x.unitPrice)}</td><td>${money(x.total)}</td></tr>`).join("");
+  const w = window.open("", "_blank");
+  if (!w) return toast("Chop etish", "Brauzer popup ni blokladi.", "error");
+  w.document.write(`<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>${inv.number}</title><style>body{font-family:'Times New Roman',serif;padding:40px;max-width:700px;margin:auto;color:#1F3864}h1{font-size:24px;margin:0}.sub{color:#666;font-size:13px;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}th{background:#f2f6fb}.right{text-align:right}.total{font-size:20px;font-weight:bold;text-align:right;margin-top:12px}.foot{margin-top:30px;font-size:12px;color:#777;text-align:center}</style></head><body><h1>MEHMONXONA</h1><div class="sub">Hisob-faktura · ${inv.number} · ${fmtDate(inv.issueDate)}</div><p>${esc(clientName(c))} · ${esc(r?r.roomNumber+"-xona":"")}</p><table><tr><th>Tavsif</th><th>Miqdor</th><th>Narx</th><th>Summa</th></tr>${rows}</table><div class="total">Jami: ${money(invoiceTotal(inv))}<br>To'langan: ${money(invoicePaid(inv))}<br>Qoldiq: ${money(invoiceBalance(inv))}</div><div class="foot">Hisob-faktura ${inv.number} · HMS</div><script>window.onload=function(){window.print()}<\/script></body></html>`);
+  w.document.close();
+}
+function refundPayment(id) {
+  const p = (db.payments||[]).find(x=>x.id===id); if (!p) return;
+  confirmDialog("To'lovni qaytarish", `${money(p.amount)} to'lovini qaytarmoqchimisiz?`, () => {
+    p.status = "refunded";
+    db.refunds.push({ id:uid("ref"), paymentId:p.id, amount:p.amount, date:todayStr(), by:currentUser.name });
+    log("PAYMENT_REFUND", `${money(p.amount)} qaytarildi`);
+    saveDB(); render(); toast("Qaytarildi", `${money(p.amount)} qaytarish qayd etildi.`);
+  });
+}
+
+/* =========================================================
+   RETROSPECTIVE / BURNDOWN
+   ========================================================= */
+function renderBurndownSvg(retro) {
+  const W = 760, H = 320, L = 55, R = 20, T = 25, B = 45;
+  const maxV = Math.max(...retro.days.map(d => Math.max(d.ideal, d.actual)), 1);
+  const x = d => L + (W - L - R) * d / (retro.days.length - 1);
+  const y = v => T + (H - T - B) * (1 - v / maxV);
+  const ideal = retro.days.map(d => `${x(d.day)},${y(d.ideal)}`).join(" ");
+  const actual = retro.days.map(d => `${x(d.day)},${y(d.actual)}`).join(" ");
+  const grid = [0, Math.round(maxV/2), maxV].map(v => `<line x1="${L}" y1="${y(v)}" x2="${W-R}" y2="${y(v)}" stroke="#EDF1F6"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" font-size="9" fill="#7F8C9F">${v}</text>`).join("");
+  const labels = retro.days.filter(d => d.day % 2 === 0 || d.day === 10).map(d => `<text x="${x(d.day)}" y="${H-18}" text-anchor="middle" font-size="9" fill="#7F8C9F">D${d.day}</text>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+    ${grid}
+    <line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="#C9D3E0"/>
+    <polyline points="${ideal}" fill="none" stroke="#8EA9C1" stroke-width="2.5" stroke-dasharray="7 5"/>
+    <polyline points="${actual}" fill="none" stroke="#2E75B6" stroke-width="3.5"/>
+    ${retro.days.map(d => `<circle cx="${x(d.day)}" cy="${y(d.actual)}" r="3.5" fill="#fff" stroke="#2E75B6" stroke-width="2"/>`).join("")}
+    ${labels}
+    <text x="${L}" y="15" font-size="10" fill="#7F8C9F">qolgan story point</text>
+    <text x="${W-R-150}" y="15" font-size="10" fill="#2E75B6" font-weight="bold">— haqiqiy</text>
+    <text x="${W-R-70}" y="15" font-size="10" fill="#7F8C9F">-- ideal</text>
+    <line x1="${x(3)}" y1="${T}" x2="${x(3)}" y2="${H-B}" stroke="#C00000" stroke-width="1.5" stroke-dasharray="3 3" opacity=".5"/>
+    <line x1="${x(6)}" y1="${T}" x2="${x(6)}" y2="${H-B}" stroke="#C00000" stroke-width="1.5" stroke-dasharray="3 3" opacity=".5"/>
+    <text x="${x(3)+5}" y="${T+12}" font-size="9" fill="#C00000">scope +3</text>
+    <text x="${x(6)+5}" y="${T+30}" font-size="9" fill="#C00000">CI blok</text>
+  </svg>`;
+}
+function renderRetro() {
+  const retro = db.retro;
+  const actions = retro.actions || [];
+  return `
+  <div class="page-head">
+    <div><h1>Sprint retrospektivasi</h1><div class="sub">${esc(retro.sprintName)} · sprint yakuni tahlili</div></div>
+    <div class="head-actions">${can("retro.manage") ? `<button class="btn btn-primary" data-action="retro-add">+ Yangi harakat</button>` : ""}</div>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="label">Reja</div><div class="value">${retro.planned}</div><div class="hint">story point</div></div>
+    <div class="stat green"><div class="label">Bajarildi</div><div class="value">${retro.completed}</div><div class="hint">100% yakunlangan</div></div>
+    <div class="stat orange"><div class="label">Scope o'zgarishi</div><div class="value">+3</div><div class="hint">sprint o'rtasida</div></div>
+    <div class="stat purple"><div class="label">Velocity</div><div class="value">${retro.completed}</div><div class="hint">keyingi sprint uchun</div></div>
+  </div>
+  <div class="dash-grid">
+    <div class="panel">
+      <div class="panel-head"><h2>Burndown chart</h2><span class="hint">ideal va haqiqiy qoldiq</span></div>
+      ${renderBurndownSvg(retro)}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Tahlil</h2><span class="hint">Sprint 3</span></div>
+      <div class="review-chk">
+        <span><i>!</i>D3–D5 da scope +3 point qo'shildi, chiziq yuqoriga ko'tarildi.</span>
+        <span><i>!</i>D6 da CI bloklanishi 1 kunlik to'xtashga sabab bo'ldi.</span>
+        <span><i>✓</i>D7–D10 da tezlik tiklandi va sprint 0 ga yetdi.</span>
+        <span><i>✓</i>O'rtacha velocity 20 point, carryover 0.</span>
+      </div>
+      <div class="divider"></div>
+      <div class="small muted" style="line-height:1.7">Burndown bo'yicha xulosa: scope freeze qoidasi va CI barqarorligi keyingi sprintning asosiy harakatlari.</div>
+    </div>
+  </div>
+  <div class="dash-grid" style="margin-top:14px">
+    <div class="panel">
+      <div class="panel-head"><h2>Nima yaxshi bo'ldi</h2></div>
+      <div class="review-chk">${retro.well.map(x=>`<span><i>✓</i>${esc(x)}</span>`).join("")}</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Muammolar</h2></div>
+      <div class="review-chk">${retro.problems.map(x=>`<span><i style="background:var(--red-soft);color:var(--red)">!</i>${esc(x)}</span>`).join("")}</div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h2>Harakatlar rejasi</h2><span class="hint">${actions.filter(a=>a.status!=="Bajarildi").length} ta ochiq</span></div>
+    <div class="table-wrap" style="border:0"><table class="data" style="min-width:760px">
+      <thead><tr><th>Harakat</th><th>Mas'ul</th><th>Muddat</th><th>Holat</th><th>Amal</th></tr></thead>
+      <tbody>${actions.map(a=>`<tr><td class="cell-main">${esc(a.title)}</td><td>${esc(a.owner)}</td><td>${fmtDate(a.due)}</td><td><span class="chip ${a.status==="Bajarildi"?"green":"yellow"}">${esc(a.status)}</span></td><td>${can("retro.manage")?`<button class="link-btn" data-action="retro-toggle" data-id="${a.id}">${a.status==="Bajarildi"?"Qayta ochish":"Bajarildi"}</button>`:""}</td></tr>`).join("")}</tbody>
+    </table></div>
+  </div>`;
+}
+function openRetroModal() {
+  openModal(`
+    ${modalHead("Yangi harakat", "Retrospektiv natijasida qabul qilingan chora")}
+    <form data-form="retro">
+      <div class="modal-body"><div class="form-grid">
+        <div class="field full"><label>Harakat <span class="req">*</span></label><input class="input" name="title" required></div>
+        <div class="field"><label>Mas'ul</label><input class="input" name="owner" value="${esc(currentUser.name)}"></div>
+        <div class="field"><label>Muddat</label><input class="input" name="due" type="date" value="${addDays(7)}"></div>
+      </div></div>
+      ${modalFoot("Harakat qo'shish")}
+    </form>`, "narrow");
+}
+function saveRetroAction(form) {
+  const f = new FormData(form);
+  const title = String(f.get("title")||"").trim();
+  if (!title) return toast("Xato", "Harakat matnini kiriting.", "error");
+  db.retro.actions.push({ id:uid("act"), title, owner:String(f.get("owner")||"").trim(), due:String(f.get("due")||addDays(7)), status:"Ochiq" });
+  log("RETRO_ACTION", title); saveDB(); closeModal(); render(); toast("Qo'shildi","Yangi harakat rejaga kiritildi.");
+}
+function toggleRetroAction(id) {
+  const a = (db.retro.actions||[]).find(x=>x.id===id); if (!a) return;
+  a.status = a.status === "Bajarildi" ? "Ochiq" : "Bajarildi";
+  saveDB(); render(); toast("Holat yangilandi", `${a.title}: ${a.status}`);
+}
+
+/* =========================================================
+   FINANCIAL REPORTS
+   ========================================================= */
+function renderReports() {
+  const paid = (db.payments||[]).filter(p=>p.status==="paid");
+  const total = paid.reduce((s,p)=>s+Number(p.amount||0),0);
+  const month = paid.filter(p=>p.date.startsWith(monthKey())).reduce((s,p)=>s+Number(p.amount||0),0);
+  const debt = (db.invoices||[]).reduce((s,i)=>s+invoiceBalance(i),0);
+  const totalRooms = db.rooms.length;
+  const occupied = db.rooms.filter(r=>r.status==="occupied").length;
+  const occupancy = totalRooms ? Math.round(occupied/totalRooms*100) : 0;
+  const roomRevenue = paid.filter(p=>{const b=booking(p.bookingId); return b && b.total;}).reduce((s,p)=>s+Number(p.amount||0),0);
+  const months=[];
+  for (let i=5;i>=0;i--) { const d=new Date(); d.setMonth(d.getMonth()-i); const k=isoDate(d).slice(0,7); months.push({k,label:MONTHS[d.getMonth()],v:paid.filter(p=>p.date.startsWith(k)).reduce((s,p)=>s+Number(p.amount||0),0)}); }
+  const maxMonth=Math.max(...months.map(m=>m.v),1);
+  const methods=["cash","card","transfer"].map(m=>({m,label:m==="cash"?"Naqd":m==="card"?"Karta":"O'tkazma",v:paid.filter(p=>p.method===m).reduce((s,p)=>s+Number(p.amount||0),0)}));
+  const debtors=(db.invoices||[]).filter(i=>invoiceBalance(i)>0).sort((a,b)=>invoiceBalance(b)-invoiceBalance(a));
+  return `
+  <div class="page-head"><div><h1>Moliyaviy hisobotlar</h1><div class="sub">Tushum, qarzdorlik, bandlik va xizmatlar tahlili</div></div>${can("finance.export")?`<button class="btn btn-secondary" data-action="reports-export">${icon("download",16)} CSV eksport</button>`:""}</div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat green"><div class="label">Jami tushum</div><div class="value" style="font-size:21px">${money(total)}</div><div class="hint">to'langan summalar</div></div>
+    <div class="stat"><div class="label">Shu oy</div><div class="value" style="font-size:21px">${money(month)}</div><div class="hint">${MONTHS[new Date().getMonth()]}</div></div>
+    <div class="stat red"><div class="label">Qarzdorlik</div><div class="value" style="font-size:21px">${money(debt)}</div><div class="hint">${debtors.length} ta hisob</div></div>
+    <div class="stat purple"><div class="label">Bandlik</div><div class="value">${occupancy}%</div><div class="hint">${occupied}/${totalRooms} xona</div></div>
+  </div>
+  <div class="dash-grid">
+    <div class="panel"><div class="panel-head"><h2>Oylik tushum</h2><span class="hint">so'nggi 6 oy</span></div>
+      <div class="chart" style="height:180px">${months.map(m=>`<div class="bar-wrap"><div class="bar" style="height:${Math.max(2,Math.round(m.v/maxMonth*100))}%"><span>${m.v?Math.round(m.v/1000)+"k":""}</span></div><div class="bar-label">${m.label}</div></div>`).join("")}</div>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>To'lov usullari</h2></div>
+      ${methods.map(m=>`<div class="stat-line"><span>${m.label}</span><b>${money(m.v)}</b></div>`).join("")}
+      <div class="divider"></div>
+      <div class="stat-line"><span>Xona tushumi</span><b>${money(roomRevenue)}</b></div>
+      <div class="stat-line"><span>Xizmat tushumi</span><b>${money((db.serviceOrders||[]).filter(o=>o.status!=="cancelled").reduce((s,o)=>s+Number(o.total||0),0))}</b></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px"><div class="panel-head"><h2>Qarzdor hisoblar</h2><span class="hint">${debtors.length} ta</span></div>
+    <div class="table-wrap" style="border:0"><table class="data" style="min-width:720px"><thead><tr><th>Hisob</th><th>Mijoz</th><th>Jami</th><th>To'langan</th><th>Qoldiq</th><th>Muddat</th></tr></thead><tbody>${debtors.map(i=>{const c=client(i.customerId);return `<tr><td class="cell-main">${esc(i.number)}</td><td>${esc(clientName(c))}</td><td>${money(invoiceTotal(i))}</td><td>${money(invoicePaid(i))}</td><td style="color:var(--red);font-weight:700">${money(invoiceBalance(i))}</td><td>${fmtDate(i.dueDate)}</td></tr>`;}).join("")}</tbody></table></div>
+  </div>`;
+}
+function exportFinancialCSV() {
+  const rows=[["Hisob","Mijoz","Jami","To'langan","Qoldiq","Holat"]];
+  (db.invoices||[]).forEach(i=>rows.push([i.number,clientName(client(i.customerId)),invoiceTotal(i),invoicePaid(i),invoiceBalance(i),invoiceStatus(i).label]));
+  const csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=`hms-moliya-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  log("FINANCE_EXPORT","Moliyaviy hisobot eksport qilindi"); saveDB(); toast("Eksport", "CSV fayl yuklandi.");
 }
 
 /* =========================================================
@@ -2470,6 +2793,7 @@ function renderSettings() {
       <div class="stat-line"><span>Risk lar</span><b>${(db.risks || []).length} ta</b></div>
       <div class="stat-line"><span>Yashash yozuvlari</span><b>${(db.stays || []).length} ta</b></div>
       <div class="stat-line"><span>Xizmat buyurtmalari</span><b>${(db.serviceOrders || []).length} ta</b></div>
+      <div class="stat-line"><span>Hisob-fakturalar</span><b>${(db.invoices || []).length} ta</b></div>
       <div class="divider"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary" data-action="export">${icon("download",16)} JSON zaxira</button>
@@ -3228,7 +3552,15 @@ function onGlobalClick(e) {
     case "order-deliver": setOrderStatus(id, "delivered"); break;
     case "order-cancel": setOrderStatus(id, "cancelled"); break;
     case "ci-run": runPipeline(); break;
-    case "payment-add": openPaymentModal(); break;
+    case "payment-add": openPaymentModal(btn.dataset.booking || null); break;
+    case "payment-view": setPaymentView(btn.dataset.mode); break;
+    case "payment-refund": refundPayment(id); break;
+    case "invoice-open": if (id) openInvoiceDetails(id); break;
+    case "invoice-print": if (id) printInvoice(id); break;
+    case "stay-invoice": openInvoiceForStay(id); break;
+    case "reports-export": exportFinancialCSV(); break;
+    case "retro-add": openRetroModal(); break;
+    case "retro-toggle": toggleRetroAction(id); break;
     case "user-add": openUserModal(); break;
     case "user-edit": openUserModal(id); break;
     case "user-toggle": toggleUser(id); break;
@@ -3256,6 +3588,7 @@ function onGlobalSubmit(e) {
   else if (type === "checkout") saveCheckOut(form);
   else if (type === "service") saveService(form);
   else if (type === "order") saveServiceOrder(form);
+  else if (type === "retro") saveRetroAction(form);
 }
 
 /* =========================================================

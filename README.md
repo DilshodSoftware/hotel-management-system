@@ -15,9 +15,11 @@ Mehmonxona faoliyatini boshqarish uchun **bitta HTML faylda** ishlaydigan demo w
 - **Bronlar kalendari** — 14 kunlik bandlik ko'rinishi
 - **Joylashtirish** — check-in, check-out, haqiqiy kelish/chiqish vaqti, erta kelish/kech chiqish, qarz bilan chiqish
 - **Xizmatlar** — nonushta, restoran, kir yuvish, transfer, parking va boshqa xizmatlar; buyurtmalar va holatlar
-- **To'lovlar** — to'lov qayd etish, qoldiq va qarzdorlik nazorati
+- **To'lovlar** — hisob-fakturalar, naqd/karta/o'tkazma, qisman to'lov, qaytarish va qarzdorlik
+- **Hisobotlar** — kunlik/oylik tushum, to'lov usullari, qarzdorlar, bandlik va ADR/RevPAR
 - **Foydalanuvchilar** — rollar, bloklash/faollashtirish
 - **Sprintlar** — Jira uslubidagi backlog va board, story point, PR holati
+- **Retrospektiv** — sprint tahlili, burndown chart va harakatlar rejasi
 - **Reja va risklar** — Gantt diagrammasi, risk matritsasi va risk registri
 - **CI/CD** — GitHub Actions pipeline, PR review va branch protection ko'rinishi
 - **Sozlamalar** — JSON zaxira, import va demo ma'lumotlarni tiklash
@@ -33,6 +35,16 @@ Mehmonxona faoliyatini boshqarish uchun **bitta HTML faylda** ishlaydigan demo w
 ![Joylashtirish](screenshots/stays.png)
 
 ![Xizmatlar](screenshots/services.png)
+
+### Retrospektiv va burndown
+
+![Retrospektiv](screenshots/retro.png)
+
+### Hisob-fakturalar va moliyaviy hisobotlar
+
+![Hisob-fakturalar](screenshots/invoices.png)
+
+![Moliyaviy hisobotlar](screenshots/reports.png)
 
 ### Gantt va risk registri
 
@@ -81,12 +93,16 @@ hotel-management-system/
 │   ├── Laboratoriya-2.docx
 │   ├── Laboratoriya-3.docx
 │   ├── Laboratoriya-4.docx
-│   └── Laboratoriya-5.docx
+│   ├── Laboratoriya-5.docx
+│   └── Laboratoriya-6.docx
 └── screenshots/
     ├── dashboard.png
     ├── bookings-calendar.png
     ├── stays.png
     ├── services.png
+    ├── retro.png
+    ├── invoices.png
+    ├── reports.png
     ├── gantt-risk.png
     └── ci.png
 ```
@@ -99,6 +115,7 @@ hotel-management-system/
 - [Laboratoriya 3 — Jira sprint, Git branch va PR](docs/Laboratoriya-3.docx)
 - [Laboratoriya 4 — Gantt, risk registri va bronlash](docs/Laboratoriya-4.docx)
 - [Laboratoriya 5 — Code Review, CI va joylashtirish](docs/Laboratoriya-5.docx)
+- [Laboratoriya 6 — Retrospektiv, burndown va moliya](docs/Laboratoriya-6.docx)
 
 ## Texnik eslatmalar
 

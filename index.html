@@ -390,6 +390,30 @@
   .risk-matrix .lbl{background:transparent;font-weight:700;color:#5B6B80}
   .risk-matrix .m1{background:#EAF4E5}.risk-matrix .m2{background:#FBF2D6}.risk-matrix .m3{background:#FBE9DC}.risk-matrix .m4{background:#FBE4E4}
 
+  /* ---------- stays / services / ci ---------- */
+  .pipeline{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .pipe-step{flex:1;min-width:118px;background:#F7F9FC;border:1px solid var(--line);border-radius:9px;padding:10px 11px;position:relative}
+  .pipe-step:not(:last-child)::after{content:"›";position:absolute;right:-9px;top:50%;transform:translateY(-50%);
+    color:#B4C7E7;font-size:22px;font-weight:700;z-index:2}
+  .pipe-step .ico{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;margin-bottom:7px}
+  .pipe-step .ico.success{background:var(--green-soft);color:var(--green)}
+  .pipe-step .ico.failure{background:var(--red-soft);color:var(--red)}
+  .pipe-step .ico.running{background:var(--yellow-soft);color:var(--yellow)}
+  .pipe-step .ico.pending{background:#EEF1F5;color:#7F8C9F}
+  .pipe-step b{display:block;font-size:10.5px;color:var(--navy)}
+  .pipe-step span{display:block;font-size:9px;color:var(--muted);margin-top:2px}
+  .ci-hero{background:linear-gradient(135deg,#16305A,#2E5C9A);color:#fff;border-radius:12px;padding:15px 18px;margin-bottom:13px}
+  .ci-hero h2{color:#fff;font-size:21px;margin:0}.ci-hero .sub{color:#D6E3F3;font-size:11.5px;margin-top:4px}
+  .ci-hero .meta{display:flex;gap:15px;flex-wrap:wrap;margin-top:9px;font-size:10.5px;color:#D6E3F3}
+  .ci-hero .meta b{color:#fff}
+  .review-chk{display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:#4A5A6E}
+  .review-chk span{display:flex;gap:7px;align-items:flex-start}
+  .review-chk i{width:15px;height:15px;border-radius:4px;background:var(--green-soft);color:var(--green);
+    display:grid;place-items:center;font-size:9px;flex:none;margin-top:2px}
+  .yaml{background:#F5F7FA;border-left:4px solid var(--blue);border-radius:7px;padding:10px 12px;
+    font-family:ui-monospace,Consolas,monospace;font-size:9.5px;line-height:1.55;color:#26364A;
+    white-space:pre;overflow:auto;max-height:260px}
+
   /* ---------- responsive ---------- */
   @media(max-width:1180px){
     .stats{grid-template-columns:repeat(3,1fr)}
@@ -550,7 +574,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const DB_KEY = "hms_app_v1";
 const SESSION_KEY = "hms_session_v1";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 function icon(name, size = 18) {
   return `<svg class="icon" width="${size}" height="${size}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
@@ -627,6 +651,15 @@ const BOOKING_STATUS = {
   cancelled:  { label: "Bekor qilingan", cls: "red" },
   no_show:    { label: "Kelmagan",       cls: "orange" }
 };
+const STAY_STATUS = {
+  in_house: { label:"Yashamoqda", cls:"blue" },
+  completed:{ label:"Yakunlangan", cls:"gray" }
+};
+const ORDER_STATUS = {
+  ordered:   { label:"Buyurtma", cls:"yellow" },
+  delivered: { label:"Yetkazilgan", cls:"green" },
+  cancelled: { label:"Bekor", cls:"red" }
+};
 const ISSUE_STATUS = {
   backlog:  { label:"Backlog",     cls:"gray" },
   todo:     { label:"To Do",       cls:"blue" },
@@ -658,8 +691,9 @@ const ABILITIES = {
   manager: ["room.create","room.edit","room.delete","room.status","type.manage",
             "client.create","client.edit","client.sensitive","client.export",
             "booking.create","booking.checkin","booking.checkout","booking.cancel",
-            "payment.create","sprint.manage","plan.manage"],
-  receptionist: ["room.status","client.create","booking.create","booking.edit","booking.confirm","booking.checkin","booking.checkout","booking.cancel"],
+            "payment.create","sprint.manage","plan.manage","stay.checkin","stay.checkout",
+            "service.manage","service.order","ci.run"],
+  receptionist: ["room.status","client.create","booking.create","booking.edit","booking.confirm","booking.checkin","booking.checkout","booking.cancel","stay.checkin","stay.checkout","service.order"],
   accountant: ["payment.create"]
 };
 const NAV = [
@@ -670,7 +704,10 @@ const NAV = [
   { id:"room-types", label:"Xona turlari", icon:"layers", roles:["admin","manager"] },
   { id:"clients", label:"Mijozlar", icon:"users", roles:["admin","manager","receptionist"] },
   { id:"bookings", label:"Bronlar", icon:"calendar", roles:["admin","manager","receptionist"] },
+  { id:"stays", label:"Joylashtirish", icon:"building", roles:["admin","manager","receptionist"] },
+  { id:"services", label:"Xizmatlar", icon:"layers", roles:["admin","manager","receptionist"] },
   { id:"payments", label:"To'lovlar", icon:"card", roles:["admin","manager","accountant"] },
+  { id:"ci", label:"CI/CD", icon:"shield", roles:["admin","manager"] },
   { id:"users", label:"Foydalanuvchilar", icon:"shield", roles:["admin"] },
   { id:"settings", label:"Sozlamalar", icon:"settings", roles:["admin"] }
 ];
@@ -696,7 +733,7 @@ function loadDB() {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      if (data && (data.version === 1 || data.version === 2)) return migrateDB(data);
+      if (data && (data.version === 1 || data.version === 2 || data.version === 3)) return migrateDB(data);
       if (data && data.version === DB_VERSION) return data;
     }
   } catch {}
@@ -728,6 +765,11 @@ function migrateDB(d) {
   d.prs = d.prs || fresh.prs;
   d.project = d.project || fresh.project;
   d.risks = d.risks || fresh.risks;
+  d.services = d.services || fresh.services;
+  d.stays = d.stays || fresh.stays;
+  d.serviceOrders = d.serviceOrders || fresh.serviceOrders;
+  d.ciRuns = d.ciRuns || fresh.ciRuns;
+  d.prReviews = d.prReviews || fresh.prReviews;
   d.version = DB_VERSION;
   return d;
 }
@@ -933,8 +975,62 @@ function seedDB() {
       probability:2, impact:3, mitigation:"Bilim almashish, juftlik dasturlash, vazifalarni qayta taqsimlash",
       owner:"Shahnoza Q.", status:"Yopilgan", due:day(-1) }
   ];
+  const services = [
+    { id:"svc_breakfast", name:"Nonushta", category:"Ovqatlanish", price:45000, unit:"kishi/kun", active:true },
+    { id:"svc_restaurant", name:"Restoran", category:"Ovqatlanish", price:80000, unit:"buyurtma", active:true },
+    { id:"svc_laundry", name:"Kir yuvish", category:"Maishiy", price:25000, unit:"kg", active:true },
+    { id:"svc_cleaning", name:"Xona tozalash", category:"Maishiy", price:30000, unit:"marta", active:true },
+    { id:"svc_transfer", name:"Aeroport transferi", category:"Transport", price:120000, unit:"marta", active:true },
+    { id:"svc_parking", name:"Avtoturargoh", category:"Transport", price:20000, unit:"kun", active:true },
+    { id:"svc_spa", name:"SPA xizmati", category:"Qo'shimcha", price:150000, unit:"marta", active:true }
+  ];
+  const stays = [
+    { id:"stay1", code:"ST-001", bookingId:"b1", roomId:"r201", customerId:"c1", checkInAt:day(-1)+"T14:20",
+      plannedCheckOut:day(1)+"T12:00", checkOutAt:null, status:"in_house", early:false, late:false,
+      notes:"Kechki ovqat buyurtmasi bor.", createdBy:"Bekzod E." },
+    { id:"stay2", code:"ST-002", bookingId:"b4", roomId:"r302", customerId:"c4", checkInAt:day(-2)+"T15:10",
+      plannedCheckOut:t+"T12:00", checkOutAt:null, status:"in_house", early:false, late:false,
+      notes:"", createdBy:"Bekzod E." },
+    { id:"stay3", code:"ST-003", bookingId:"b6", roomId:"r303", customerId:"c6", checkInAt:day(-3)+"T13:40",
+      plannedCheckOut:day(-1)+"T12:00", checkOutAt:day(-1)+"T11:30", status:"completed", early:false,
+      late:false, notes:"", createdBy:"Bekzod E." }
+  ];
+  const serviceOrders = [
+    { id:"so1", stayId:"stay1", serviceId:"svc_breakfast", quantity:2, unitPrice:45000, total:90000,
+      orderedAt:day(-1)+"T18:05", status:"delivered", createdBy:"Bekzod E.", notes:"Ertalab 8:00" },
+    { id:"so2", stayId:"stay2", serviceId:"svc_parking", quantity:2, unitPrice:20000, total:40000,
+      orderedAt:day(-1)+"T16:20", status:"ordered", createdBy:"Bekzod E.", notes:"" },
+    { id:"so3", stayId:"stay3", serviceId:"svc_laundry", quantity:3, unitPrice:25000, total:75000,
+      orderedAt:day(-2)+"T10:15", status:"delivered", createdBy:"Bekzod E.", notes:"" }
+  ];
+  const ciRuns = [
+    { id:"run1", number:128, branch:"develop", commit:"a1b2c3d", status:"success",
+      started:t+"T10:12", duration:"2m 34s",
+      jobs:[
+        { name:"checkout", status:"success", duration:"5s" },
+        { name:"setup .NET", status:"success", duration:"12s" },
+        { name:"restore", status:"success", duration:"18s" },
+        { name:"build", status:"success", duration:"42s" },
+        { name:"test", status:"success", duration:"51s" },
+        { name:"lint", status:"success", duration:"14s" },
+        { name:"security", status:"success", duration:"21s" },
+        { name:"deploy", status:"success", duration:"—" }
+      ] },
+    { id:"run2", number:127, branch:"feature/HMS-201-checkin", commit:"f9c2b1a", status:"success",
+      started:day(-1)+"T16:40", duration:"2m 41s", jobs:[] },
+    { id:"run3", number:126, branch:"main", commit:"3d7e8a0", status:"failure",
+      started:day(-2)+"T11:05", duration:"1m 58s", jobs:[] }
+  ];
+  const prReviews = [
+    { number:46, title:"HMS-201: Check-in va stay yozuvi", branch:"feature/HMS-201-checkin",
+      author:"Bekzod E.", reviewer:"Dilshod I.", status:"approved", comments:4, checks:"6/6", updated:todayStr() },
+    { number:47, title:"HMS-202: Qo'shimcha xizmat buyurtmalari", branch:"feature/HMS-202-services",
+      author:"Shahnoza Q.", reviewer:"Dilshod I.", status:"changes", comments:7, checks:"5/6", updated:todayStr() },
+    { number:48, title:"HMS-203: Check-out va hisob-kitob", branch:"feature/HMS-203-checkout",
+      author:"Dilshod I.", reviewer:"Shahnoza Q.", status:"review", comments:2, checks:"4/6", updated:todayStr() }
+  ];
   return { version:DB_VERSION, roomTypes:types, amenities, rooms, clients, bookings, payments, users,
-    sprints, issues, prs, project, risks, activity:[] };
+    sprints, issues, prs, project, risks, services, stays, serviceOrders, ciRuns, prReviews, activity:[] };
 }
 
 /* =========================================================
@@ -962,6 +1058,29 @@ function roomBusy(roomId, checkIn, checkOut, excludeId) {
     b.checkIn < checkOut && checkIn < b.checkOut
   );
 }
+function nowLocal(d = new Date()) {
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtDateTime(s) {
+  if (!s) return "—";
+  const [date, time] = String(s).split("T");
+  return `${fmtDate(date)}${time ? " · " + time : ""}`;
+}
+function service(id) { return (db.services || []).find(s => s.id === id); }
+function stay(id) { return (db.stays || []).find(s => s.id === id); }
+function stayServices(stayId) {
+  return (db.serviceOrders || []).filter(o => o.stayId === stayId && o.status !== "cancelled");
+}
+function stayServiceTotal(stayId) {
+  return stayServices(stayId).reduce((s, o) => s + Number(o.total || 0), 0);
+}
+function stayBalance(st) {
+  const b = st ? booking(st.bookingId) : null;
+  if (!b) return 0;
+  return Math.max(0, Number(b.total || 0) + stayServiceTotal(st.id) - bookingPaid(b));
+}
+
 function nextBookingCode() {
   const year = new Date().getFullYear();
   let max = 0;
@@ -1129,7 +1248,10 @@ function render() {
     "room-types": renderRoomTypes,
     clients: renderClients,
     bookings: renderBookings,
+    stays: renderStays,
+    services: renderServices,
     payments: renderPayments,
+    ci: renderCI,
     users: renderUsers,
     settings: renderSettings
   };
@@ -1258,6 +1380,8 @@ function renderDashboard() {
       <div class="quick">
         ${can("sprint.manage") ? `<button data-nav="sprint"><span class="qico">${icon("cards",16)}</span><span><b>Sprint doskasi</b><br><span class="muted small">Backlog va PR holati</span></span></button>` : ""}
         ${can("plan.manage") ? `<button data-nav="plan"><span class="qico">${icon("calendar",16)}</span><span><b>Reja va risklar</b><br><span class="muted small">Gantt va risk registri</span></span></button>` : ""}
+        ${can("stay.checkin") ? `<button data-action="stay-checkin"><span class="qico">${icon("building",16)}</span><span><b>Check-in</b><br><span class="muted small">Mehmonni joylashtirish</span></span></button>` : ""}
+        ${can("service.order") ? `<button data-action="order-add"><span class="qico">${icon("layers",16)}</span><span><b>Xizmat qo'shish</b><br><span class="muted small">Buyurtma yaratish</span></span></button>` : ""}
         ${can("booking.create") ? `<button data-action="booking-add"><span class="qico">${icon("calendar",16)}</span><span><b>Yangi bron</b><br><span class="muted small">Mijoz va xonani tanlash</span></span></button>` : ""}
         ${can("room.status") ? `<button data-nav="rooms"><span class="qico">${icon("bed",16)}</span><span><b>Xona holati</b><br><span class="muted small">Bo'sh / band / ta'mir</span></span></button>` : ""}
         ${can("client.create") ? `<button data-action="client-add"><span class="qico">${icon("users",16)}</span><span><b>Mijoz qo'shish</b><br><span class="muted small">Yangi mijoz kartasi</span></span></button>` : ""}
@@ -1525,6 +1649,418 @@ function saveRisk(form) {
     log("RISK_CREATED", title); toast("Qo'shildi", "Yangi risk registrga kiritildi.");
   }
   saveDB(); closeModal(); render();
+}
+
+/* =========================================================
+   STAYS / CHECK-IN / CHECK-OUT
+   ========================================================= */
+function nextStayCode() {
+  let max = 0;
+  (db.stays || []).forEach(s => { const m = String(s.code || "").match(/(\d+)/); if (m) max = Math.max(max, +m[1]); });
+  return "ST-" + String(max + 1).padStart(3, "0");
+}
+function renderStays() {
+  const all = [...(db.stays || [])].sort((a,b) => (a.status === b.status ? String(b.checkInAt).localeCompare(String(a.checkInAt)) : a.status === "in_house" ? -1 : 1));
+  const inHouse = all.filter(s => s.status === "in_house");
+  const todayOut = inHouse.filter(s => String(s.plannedCheckOut).startsWith(todayStr()));
+  const svcTotal = (db.serviceOrders || []).filter(o => o.status !== "cancelled").reduce((x,o)=>x+Number(o.total||0),0);
+  const debt = inHouse.reduce((x,s)=>x+stayBalance(s),0);
+  return `
+  <div class="page-head">
+    <div><h1>Joylashtirish</h1><div class="sub">Check-in, yashash yozuvlari va check-out nazorati</div></div>
+    <div class="head-actions">${can("stay.checkin") ? `<button class="btn btn-primary" data-action="stay-checkin">${icon("plus",16)} Check-in</button>` : ""}</div>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="label">Yashamoqda</div><div class="value">${inHouse.length}</div><div class="hint">faol yashash yozuvi</div></div>
+    <div class="stat orange"><div class="label">Bugun check-out</div><div class="value">${todayOut.length}</div><div class="hint">reja bo'yicha</div></div>
+    <div class="stat green"><div class="label">Xizmat tushumi</div><div class="value" style="font-size:20px">${money(svcTotal)}</div><div class="hint">barcha buyurtmalar</div></div>
+    <div class="stat red"><div class="label">Qarzdorlik</div><div class="value" style="font-size:20px">${money(debt)}</div><div class="hint">faol yashashlar</div></div>
+  </div>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Kod</th><th>Mijoz</th><th>Xona</th><th>Check-in</th><th>Check-out</th><th>Kecha</th><th>Xizmat</th><th>Balans</th><th>Holat</th><th>Amallar</th></tr></thead>
+    <tbody>${all.map(st => {
+      const b = booking(st.bookingId), c = client(st.customerId), r = room(st.roomId);
+      const bal = stayBalance(st), svc = stayServiceTotal(st.id);
+      return `<tr>
+        <td><button class="link-btn" style="font-size:12.5px" data-action="stay-open" data-id="${st.id}">${esc(st.code)}</button></td>
+        <td><div class="cell-main">${esc(clientName(c))}</div><div class="cell-sub">${b ? esc(b.code) : ""}</div></td>
+        <td><div class="cell-main">${esc(r?r.roomNumber:"—")}</div><div class="cell-sub">${esc(r?(roomType(r.roomTypeId)||{}).name||"":"")}</div></td>
+        <td class="nowrap">${fmtDateTime(st.checkInAt)}${st.early ? `<div class="cell-sub" style="color:var(--orange)">erta kelish</div>`:""}</td>
+        <td class="nowrap">${st.checkOutAt ? fmtDateTime(st.checkOutAt) : fmtDateTime(st.plannedCheckOut)}${st.late ? `<div class="cell-sub" style="color:var(--red)">kech chiqish</div>`:""}</td>
+        <td>${b ? nights(b.checkIn,b.checkOut) : "—"}</td>
+        <td class="money">${money(svc)}</td>
+        <td>${bal>0?`<span style="color:var(--red);font-weight:700">${money(bal)}</span>`:`<span style="color:var(--green);font-weight:700">To'langan</span>`}</td>
+        <td>${statusChip(STAY_STATUS,st.status)}</td>
+        <td><div class="actions">
+          <button class="icon-btn" title="Ko'rish" data-action="stay-open" data-id="${st.id}">${icon("eye",16)}</button>
+          ${st.status === "in_house" && can("service.order") ? `<button class="icon-btn" title="Xizmat" data-action="stay-service" data-id="${st.id}">${icon("plus",16)}</button>` : ""}
+          ${st.status === "in_house" && can("stay.checkout") ? `<button class="icon-btn" title="Check-out" data-action="stay-checkout" data-id="${st.id}">${icon("logout",16)}</button>` : ""}
+        </div></td></tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+function openCheckInModal() {
+  if (!can("stay.checkin")) return;
+  const options = db.bookings.filter(b => b.status === "confirmed" && !(db.stays||[]).some(s => s.bookingId === b.id));
+  if (!options.length) return toast("Check-in", "Check-in uchun tasdiqlangan bron topilmadi.", "info");
+  const opts = options.map(b => {
+    const c = client(b.clientId), r = room(b.roomId);
+    return `<option value="${b.id}">${esc(b.code)} · ${esc(clientName(c))} · ${esc(r?r.roomNumber:"—")} · ${fmtDate(b.checkIn)}</option>`;
+  }).join("");
+  openModal(`
+    ${modalHead("Check-in", "Tasdiqlangan bronni tanlang va kelish vaqtini qayd eting")}
+    <form data-form="checkin">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>Bron <span class="req">*</span></label><select class="input" name="bookingId" id="ciBooking" onchange="updateCheckInInfo()" required>${opts}</select></div>
+          <div class="field"><label>Haqiqiy kelish vaqti <span class="req">*</span></label><input class="input" name="checkInAt" type="datetime-local" value="${nowLocal()}" required></div>
+          <div class="field"><label>Hujjatlar tekshirildi</label><label class="chk"><input type="checkbox" name="docOk" required> Pasport / ID tasdiqlandi</label></div>
+          <div class="field full"><div class="panel" id="ciInfo" style="background:#F2F7FD;border-color:#D6E4F5;padding:11px 13px;font-size:12px"></div></div>
+          <div class="field full"><label>Izoh</label><input class="input" name="notes" placeholder="Erta kelish, qo'shimcha karavot..."></div>
+        </div>
+      </div>
+      ${modalFoot("Check-in qilish")}
+    </form>`, "wide");
+  updateCheckInInfo();
+}
+function updateCheckInInfo() {
+  const b = booking($("#ciBooking")?.value);
+  const el = $("#ciInfo"); if (!el || !b) return;
+  const c = client(b.clientId), r = room(b.roomId);
+  el.innerHTML = `<b>${esc(clientName(c))}</b> · ${esc(r?r.roomNumber+"-xona":"")} · ${fmtDate(b.checkIn)} – ${fmtDate(b.checkOut)}<br><span class="muted">Reja bo'yicha summa: ${money(b.total)} · ${b.guests} mehmon</span>`;
+}
+function saveCheckIn(form) {
+  const f = new FormData(form);
+  const b = booking(f.get("bookingId"));
+  if (!b) return toast("Xato", "Bronni tanlang.", "error");
+  if (b.status !== "confirmed") return toast("Xato", "Faqat tasdiqlangan bronni check-in qilish mumkin.", "error");
+  if ((db.stays||[]).some(s => s.bookingId === b.id)) return toast("Xato", "Bu bron allaqachon check-in qilingan.", "error");
+  if (!f.get("docOk")) return toast("Xato", "Hujjatlar tekshirilganini tasdiqlang.", "error");
+  const r = room(b.roomId);
+  if (r && ["maintenance","cleaning"].includes(r.status)) return toast("Xona tayyor emas", "Xona tozalanmoqda yoki ta'mirda.", "error");
+  const actual = String(f.get("checkInAt") || nowLocal());
+  const early = actual < b.checkIn + "T14:00";
+  const st = {
+    id:uid("stay"), code:nextStayCode(), bookingId:b.id, roomId:b.roomId, customerId:b.clientId,
+    checkInAt:actual, plannedCheckOut:b.checkOut + "T12:00", checkOutAt:null,
+    status:"in_house", early, late:false, notes:String(f.get("notes")||"").trim(), createdBy:currentUser.name
+  };
+  db.stays.push(st);
+  b.status = "checked_in"; b.actualCheckIn = actual;
+  if (r) {
+    r.history = [...(r.history||[]), { from:r.status, to:"occupied", reason:"Check-in", at:todayStr(), by:currentUser.name }];
+    r.status = "occupied";
+  }
+  log("CHECK_IN", `${b.code} · ${r?r.roomNumber:""} · ${st.code}`);
+  saveDB(); closeModal(); render();
+  toast("Check-in", `${clientName(client(b.clientId))} joylashtirildi · ${st.code}`);
+}
+function openCheckOutModal(stayId) {
+  const st = stay(stayId); if (!st) return;
+  const b = booking(st.bookingId), c = client(st.customerId), r = room(st.roomId);
+  const svc = stayServiceTotal(st.id), paid = b ? bookingPaid(b) : 0;
+  const roomCharge = b ? Number(b.total) : 0;
+  const balance = Math.max(0, roomCharge + svc - paid);
+  openModal(`
+    ${modalHead("Check-out va hisob-kitob", `${st.code} · ${esc(clientName(c))} · ${esc(r?r.roomNumber:"")}-xona`)}
+    <form data-form="checkout" data-id="${st.id}">
+      <div class="modal-body">
+        <div class="stat-line"><span>Xona qiymati</span><b>${money(roomCharge)}</b></div>
+        <div class="stat-line"><span>Qo'shimcha xizmatlar</span><b>${money(svc)}</b></div>
+        <div class="stat-line"><span>To'langan</span><b style="color:var(--green)">${money(paid)}</b></div>
+        <div class="stat-line"><span>Qoldiq</span><b style="color:${balance>0?"var(--red)":"var(--green)"}">${balance>0?money(balance):"To'langan"}</b></div>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="field"><label>Haqiqiy chiqish vaqti <span class="req">*</span></label><input class="input" name="checkOutAt" type="datetime-local" value="${nowLocal()}" required></div>
+          <div class="field"><label>Kech chiqish</label><label class="chk"><input type="checkbox" name="late"> Kech chiqish sifatida belgilash</label></div>
+          ${balance>0 ? `<div class="field full"><label class="chk" style="border-color:#F3B9B9;background:#FDF3F3"><input type="checkbox" name="allowDebt"> Qarz bilan chiqishga ruxsat beraman (${money(balance)})</label></div>` : ""}
+          <div class="field full"><label>Izoh</label><input class="input" name="notes" placeholder="Hisob-kitob bo'yicha izoh..."></div>
+        </div>
+      </div>
+      ${modalFoot("Check-outni yakunlash")}
+    </form>`, "wide");
+}
+function saveCheckOut(form) {
+  const st = stay(form.dataset.id); if (!st) return;
+  const b = booking(st.bookingId);
+  if (!b) return;
+  const f = new FormData(form);
+  const svc = stayServiceTotal(st.id), paid = bookingPaid(b);
+  const balance = Math.max(0, Number(b.total) + svc - paid);
+  if (balance > 0 && !f.get("allowDebt")) return toast("To'lov qilinmagan", "Qoldiq mavjud. Qarz bilan chiqishni tasdiqlang yoki to'lov qo'shing.", "error");
+  const actual = String(f.get("checkOutAt") || nowLocal());
+  st.checkOutAt = actual;
+  st.late = !!f.get("late") || actual > st.plannedCheckOut;
+  st.status = "completed";
+  st.checkOutNotes = String(f.get("notes")||"").trim();
+  b.status = "completed";
+  if (balance > 0) b.debtAllowed = true;
+  const r = room(st.roomId);
+  if (r) {
+    r.history = [...(r.history||[]), { from:r.status, to:"cleaning", reason:"Check-out", at:todayStr(), by:currentUser.name }];
+    r.status = "cleaning";
+  }
+  log("CHECK_OUT", `${st.code} · qoldiq ${money(balance)}`);
+  saveDB(); closeModal(); render();
+  toast("Check-out yakunlandi", `${st.code} · xona tozalashga o'tdi.`);
+}
+function openStayDetails(id) {
+  const st = stay(id); if (!st) return;
+  const b = booking(st.bookingId), c = client(st.customerId), r = room(st.roomId);
+  const svc = stayServiceTotal(st.id), paid = b ? bookingPaid(b) : 0;
+  const bal = stayBalance(st);
+  const orders = stayServices(st.id);
+  openModal(`
+    ${modalHead(`${st.code} · ${esc(clientName(c))}`, `${esc(r?r.roomNumber:"—")}-xona · ${esc(b?b.code:"")}`)}
+    <div class="modal-body">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">${statusChip(STAY_STATUS,st.status)}
+        ${st.early?`<span class="chip orange">Erta kelish</span>`:""}${st.late?`<span class="chip red">Kech chiqish</span>`:""}
+        <span class="chip gray">${b?nights(b.checkIn,b.checkOut):"—"} kecha</span></div>
+      <div class="stat-line"><span>Check-in</span><b>${fmtDateTime(st.checkInAt)}</b></div>
+      <div class="stat-line"><span>Reja check-out</span><b>${fmtDateTime(st.plannedCheckOut)}</b></div>
+      <div class="stat-line"><span>Haqiqiy check-out</span><b>${st.checkOutAt?fmtDateTime(st.checkOutAt):"—"}</b></div>
+      <div class="stat-line"><span>Xona qiymati</span><b>${money(b?b.total:0)}</b></div>
+      <div class="stat-line"><span>Xizmatlar</span><b>${money(svc)}</b></div>
+      <div class="stat-line"><span>To'langan</span><b style="color:var(--green)">${money(paid)}</b></div>
+      <div class="stat-line"><span>Qoldiq</span><b style="color:${bal>0?"var(--red)":"var(--green)"}">${bal>0?money(bal):"To'langan"}</b></div>
+      <div class="divider"></div>
+      <div class="panel-head"><h2 style="font-size:13px">Qo'shimcha xizmatlar</h2>${st.status==="in_house"&&can("service.order")?`<button class="link-btn" onclick="closeModal();openServiceOrderModal('${st.id}')">+ Xizmat</button>`:""}</div>
+      ${orders.length ? orders.map(o => {
+        const sv = service(o.serviceId);
+        return `<div class="list-row"><div class="list-ava">${icon("layers",14)}</div><div class="list-main"><b>${esc(sv?sv.name:"—")} × ${o.quantity}</b><span>${money(o.total)} · ${fmtDateTime(o.orderedAt)} · ${ORDER_STATUS[o.status].label}</span></div>${o.status==="ordered"&&st.status==="in_house"?`<button class="link-btn" data-action="order-deliver" data-id="${o.id}">Yetkazildi</button>`:""}</div>`;
+      }).join("") : `<div class="empty">Xizmatlar buyurtma qilinmagan</div>`}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" type="button" onclick="closeModal()">Yopish</button>
+      ${st.status==="in_house"&&can("service.order")?`<button class="btn btn-secondary" type="button" onclick="closeModal();openServiceOrderModal('${st.id}')">Xizmat qo'shish</button>`:""}
+      ${st.status==="in_house"&&can("stay.checkout")?`<button class="btn btn-primary" type="button" onclick="closeModal();openCheckOutModal('${st.id}')">Check-out</button>`:""}
+    </div>`, "wide");
+}
+
+/* =========================================================
+   SERVICES
+   ========================================================= */
+function renderServices() {
+  const services = db.services || [];
+  const orders = [...(db.serviceOrders||[])].sort((a,b)=>String(b.orderedAt).localeCompare(String(a.orderedAt)));
+  const todayRevenue = orders.filter(o=>o.status!=="cancelled"&&String(o.orderedAt).startsWith(todayStr())).reduce((s,o)=>s+Number(o.total||0),0);
+  const allRevenue = orders.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+Number(o.total||0),0);
+  return `
+  <div class="page-head">
+    <div><h1>Xizmatlar</h1><div class="sub">Qo'shimcha xizmatlar katalogi va buyurtmalar</div></div>
+    <div class="head-actions">
+      ${can("service.order") ? `<button class="btn btn-secondary" data-action="order-add">${icon("plus",16)} Buyurtma</button>` : ""}
+      ${can("service.manage") ? `<button class="btn btn-primary" data-action="service-add">${icon("plus",16)} Yangi xizmat</button>` : ""}
+    </div>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="label">Xizmatlar</div><div class="value">${services.filter(s=>s.active).length}</div><div class="hint">faol katalog</div></div>
+    <div class="stat"><div class="label">Bugungi buyurtma</div><div class="value">${orders.filter(o=>String(o.orderedAt).startsWith(todayStr())).length}</div><div class="hint">yangi buyurtmalar</div></div>
+    <div class="stat green"><div class="label">Bugungi tushum</div><div class="value" style="font-size:20px">${money(todayRevenue)}</div><div class="hint">xizmatlar bo'yicha</div></div>
+    <div class="stat purple"><div class="label">Jami tushum</div><div class="value" style="font-size:20px">${money(allRevenue)}</div><div class="hint">barcha buyurtmalar</div></div>
+  </div>
+  <div class="dash-grid two">
+    <div class="panel">
+      <div class="panel-head"><h2>Xizmatlar katalogi</h2><span class="hint">${services.length} ta</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:520px">
+        <thead><tr><th>Xizmat</th><th>Kategoriya</th><th>Narx</th><th>Birlik</th><th>Holat</th>${can("service.manage")?`<th>Amal</th>`:""}</tr></thead>
+        <tbody>${services.map(s=>`<tr><td class="cell-main">${esc(s.name)}</td><td>${esc(s.category)}</td><td class="money">${money(s.price)}</td><td>${esc(s.unit)}</td><td>${s.active?`<span class="chip green">Faol</span>`:`<span class="chip gray">Nofaol</span>`}</td>${can("service.manage")?`<td><div class="actions"><button class="icon-btn" data-action="service-edit" data-id="${s.id}">${icon("edit",15)}</button><button class="icon-btn" data-action="service-delete" data-id="${s.id}">${icon("trash",15)}</button></div></td>`:""}</tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>So'nggi buyurtmalar</h2><span class="hint">${orders.length} ta</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:520px">
+        <thead><tr><th>Sana</th><th>Mijoz / xona</th><th>Xizmat</th><th>Summa</th><th>Holat</th></tr></thead>
+        <tbody>${orders.slice(0,8).map(o=>{const st=stay(o.stayId),c=st?client(st.customerId):null,r=st?room(st.roomId):null,sv=service(o.serviceId);return `<tr><td class="nowrap">${fmtDateTime(o.orderedAt)}</td><td><div class="cell-main">${esc(c?clientName(c):"—")}</div><div class="cell-sub">${esc(r?r.roomNumber:"")}</div></td><td>${esc(sv?sv.name:"—")} × ${o.quantity}</td><td class="money">${money(o.total)}</td><td>${statusChip(ORDER_STATUS,o.status)}</td></tr>`;}).join("")}</tbody>
+      </table></div>
+    </div>
+  </div>`;
+}
+function openServiceModal(id) {
+  const s = id ? service(id) : null;
+  openModal(`
+    ${modalHead(s?"Xizmatni tahrirlash":"Yangi xizmat")}
+    <form data-form="service" data-id="${s?s.id:""}">
+      <div class="modal-body"><div class="form-grid">
+        <div class="field"><label>Nomi <span class="req">*</span></label><input class="input" name="name" value="${s?esc(s.name):""}" required></div>
+        <div class="field"><label>Kategoriya</label><input class="input" name="category" value="${s?esc(s.category):"Qo'shimcha"}"></div>
+        <div class="field"><label>Narx <span class="req">*</span></label><input class="input" name="price" type="number" min="0" step="1000" value="${s?s.price:50000}" required></div>
+        <div class="field"><label>Birlik</label><input class="input" name="unit" value="${s?esc(s.unit):"marta"}"></div>
+        <div class="field full"><label class="chk" style="width:fit-content"><input type="checkbox" name="active" ${!s||s.active?"checked":""}> Faol xizmat</label></div>
+      </div></div>
+      ${modalFoot(s?"Saqlash":"Xizmat qo'shish")}
+    </form>`, "narrow");
+}
+function saveService(form) {
+  const f = new FormData(form), id = form.dataset.id;
+  const name = String(f.get("name")||"").trim(), price = Number(f.get("price"));
+  if (!name) return toast("Xato", "Xizmat nomini kiriting.", "error");
+  if (!Number.isFinite(price) || price < 0) return toast("Xato", "Narx noto'g'ri.", "error");
+  const data = { name, category:String(f.get("category")||"").trim(), price, unit:String(f.get("unit")||"marta").trim(), active:f.get("active")==="on" };
+  if (id) { Object.assign(service(id), data); log("SERVICE_UPDATED", name); toast("Saqlandi","Xizmat yangilandi."); }
+  else { db.services.push({ id:uid("svc"), ...data }); log("SERVICE_CREATED", name); toast("Qo'shildi","Yangi xizmat yaratildi."); }
+  saveDB(); closeModal(); render();
+}
+function deleteService(id) {
+  const s = service(id); if (!s) return;
+  if ((db.serviceOrders||[]).some(o => o.serviceId === id)) return toast("O'chirib bo'lmaydi", "Bu xizmat bo'yicha buyurtmalar mavjud.", "error");
+  confirmDialog("Xizmatni o'chirish", `"${s.name}" xizmatini o'chirmoqchimisiz?`, () => {
+    db.services = db.services.filter(x => x.id !== id);
+    log("SERVICE_DELETED", s.name); saveDB(); render(); toast("O'chirildi","Xizmat olib tashlandi.");
+  });
+}
+function openServiceOrderModal(stayId) {
+  const staysIn = (db.stays||[]).filter(s => s.status === "in_house");
+  if (!staysIn.length) return toast("Buyurtma", "Faol yashash yozuvi yo'q.", "info");
+  const stOpts = staysIn.map(s => { const c=client(s.customerId),r=room(s.roomId); return `<option value="${s.id}" ${stayId===s.id?"selected":""}>${esc(s.code)} · ${esc(clientName(c))} · ${esc(r?r.roomNumber:"")}</option>`; }).join("");
+  const svcOpts = (db.services||[]).filter(s=>s.active).map(s=>`<option value="${s.id}" data-price="${s.price}">${esc(s.name)} · ${money(s.price)} / ${esc(s.unit)}</option>`).join("");
+  openModal(`
+    ${modalHead("Xizmat buyurtmasi", "Buyurtmani yashash yozuviga biriktirish")}
+    <form data-form="order">
+      <div class="modal-body"><div class="form-grid">
+        <div class="field"><label>Yashash yozuvi <span class="req">*</span></label><select class="input" name="stayId" required>${stOpts}</select></div>
+        <div class="field"><label>Xizmat <span class="req">*</span></label><select class="input" name="serviceId" id="orderService" onchange="updateOrderTotal()" required>${svcOpts}</select></div>
+        <div class="field"><label>Miqdor <span class="req">*</span></label><input class="input" id="orderQty" name="quantity" type="number" min="1" value="1" onchange="updateOrderTotal()" required></div>
+        <div class="field"><label>Sana va vaqt</label><input class="input" name="orderedAt" type="datetime-local" value="${nowLocal()}" required></div>
+        <div class="field full"><div class="panel" style="background:#F2F7FD;border-color:#D6E4F5;padding:11px 13px;display:flex;justify-content:space-between"><span class="muted small">Umumiy qiymat</span><b id="orderTotal" style="font-size:18px;color:var(--navy)">—</b></div></div>
+        <div class="field full"><label>Izoh</label><input class="input" name="notes" placeholder="Masalan, ertalab 8:00 ga"></div>
+      </div></div>
+      ${modalFoot("Buyurtma qo'shish")}
+    </form>`, "wide");
+  updateOrderTotal();
+}
+function updateOrderTotal() {
+  const s = service($("#orderService")?.value), q = Number($("#orderQty")?.value||1);
+  const el = $("#orderTotal"); if (!el) return;
+  el.textContent = s ? money(s.price * q) : "—";
+}
+function saveServiceOrder(form) {
+  const f = new FormData(form);
+  const st = stay(f.get("stayId")), sv = service(f.get("serviceId"));
+  const qty = Number(f.get("quantity"));
+  if (!st || st.status !== "in_house") return toast("Xato","Faol yashash yozuvini tanlang.","error");
+  if (!sv) return toast("Xato","Xizmatni tanlang.","error");
+  if (!Number.isFinite(qty) || qty < 1) return toast("Xato","Miqdor noto'g'ri.","error");
+  db.serviceOrders.push({ id:uid("so"), stayId:st.id, serviceId:sv.id, quantity:qty, unitPrice:sv.price,
+    total:sv.price*qty, orderedAt:String(f.get("orderedAt")||nowLocal()), status:"ordered",
+    createdBy:currentUser.name, notes:String(f.get("notes")||"").trim() });
+  log("SERVICE_ORDER", `${st.code} · ${sv.name} × ${qty}`);
+  saveDB(); closeModal(); render(); toast("Buyurtma qo'shildi", `${sv.name} × ${qty} · ${money(sv.price*qty)}`);
+}
+
+/* =========================================================
+   CI / CODE REVIEW
+   ========================================================= */
+function ciChip(status) {
+  if (status === "success") return `<span class="chip green"><span class="dot"></span>Success</span>`;
+  if (status === "failure") return `<span class="chip red"><span class="dot"></span>Failure</span>`;
+  if (status === "running") return `<span class="chip yellow"><span class="dot"></span>Running</span>`;
+  return `<span class="chip gray">Pending</span>`;
+}
+function setOrderStatus(id, status) {
+  const o = (db.serviceOrders || []).find(x => x.id === id); if (!o) return;
+  o.status = status; log("SERVICE_ORDER_STATUS", `${id}: ${status}`);
+  saveDB(); render(); toast("Buyurtma", status === "delivered" ? "Yetkazilgan deb belgilandi." : "Bekor qilindi.");
+}
+function renderCI() {
+  const runs = db.ciRuns || [];
+  const run = runs[0];
+  const prs = db.prReviews || [];
+  const success = runs.filter(r=>r.status==="success").length;
+  const rate = runs.length ? Math.round(success/runs.length*100) : 0;
+  const jobs = run?.jobs?.length ? run.jobs : [
+    {name:"checkout",status:"pending",duration:"—"},{name:"setup",status:"pending",duration:"—"},
+    {name:"restore",status:"pending",duration:"—"},{name:"build",status:"pending",duration:"—"},
+    {name:"test",status:"pending",duration:"—"},{name:"lint",status:"pending",duration:"—"},
+    {name:"security",status:"pending",duration:"—"},{name:"deploy",status:"pending",duration:"—"}
+  ];
+  return `
+  <div class="page-head">
+    <div><h1>CI/CD va Code Review</h1><div class="sub">GitHub Actions pipeline, PR tekshiruvi va branch himoyasi</div></div>
+    <div class="head-actions">${can("ci.run") ? `<button class="btn btn-primary" data-action="ci-run">${icon("refresh",16)} CI ishga tushirish</button>` : ""}</div>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat green"><div class="label">Oxirgi run</div><div class="value" style="font-size:18px">#${run?run.number:"—"}</div><div class="hint">${run?ciChip(run.status):"—"}</div></div>
+    <div class="stat"><div class="label">Muvaffaqiyat</div><div class="value">${rate}%</div><div class="hint">${success}/${runs.length} run</div></div>
+    <div class="stat orange"><div class="label">Ochiq PR</div><div class="value">${prs.filter(p=>p.status!=="approved").length}</div><div class="hint">review kutayotgan</div></div>
+    <div class="stat purple"><div class="label">Davomiylik</div><div class="value" style="font-size:18px">${run?run.duration:"—"}</div><div class="hint">oxirgi pipeline</div></div>
+  </div>
+  <div class="ci-hero">
+    <h2>GitHub Actions · ${run?esc(run.branch):"—"}</h2>
+    <div class="sub">Commit ${run?esc(run.commit):"—"} · ${run?fmtDateTime(run.started):"—"}</div>
+    <div class="meta"><span>${run?ciChip(run.status):""}</span><span>${icon("clock",13)} ${run?run.duration:"—"}</span><span>${icon("shield",13)} Branch protection faol</span></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h2>Pipeline bosqichlari</h2><span class="hint">checkout → setup → restore → build → test → lint → security → deploy</span></div>
+    <div class="pipeline">
+      ${jobs.map(j=>`<div class="pipe-step"><div class="ico ${j.status}">${j.status==="success"?"✓":j.status==="failure"?"✕":j.status==="running"?"•":"·"}</div><b>${esc(j.name)}</b><span>${esc(j.duration||"—")}</span></div>`).join("")}
+    </div>
+  </div>
+  <div class="dash-grid two" style="margin-top:14px">
+    <div class="panel">
+      <div class="panel-head"><h2>Pull Request review</h2><span class="hint">${prs.length} ta PR</span></div>
+      <div class="table-wrap" style="border:0"><table class="data" style="min-width:620px">
+        <thead><tr><th>PR</th><th>Sarlavha</th><th>Muallif</th><th>Review</th><th>Check</th><th>Holat</th></tr></thead>
+        <tbody>${prs.map(p=>`<tr><td class="cell-main">#${p.number}</td><td><div class="cell-main" style="font-size:11.5px">${esc(p.title)}</div><div class="cell-sub">${esc(p.branch)}</div></td><td>${esc(p.author)}</td><td>${esc(p.reviewer)}</td><td>${esc(p.checks)}</td><td>${p.status==="approved"?`<span class="chip green">Tasdiqlangan</span>`:p.status==="changes"?`<span class="chip red">O'zgartirish</span>`:`<span class="chip yellow">Review</span>`}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Code review checklist</h2><span class="hint">PR #46</span></div>
+      <div class="review-chk">
+        <span><i>✓</i>Acceptance criteria va testlar tekshirilgan</span>
+        <span><i>✓</i>Validatsiya va chekka holatlar qamrab olingan</span>
+        <span><i>✓</i>Maxfiy ma'lumotlar maskalangan</span>
+        <span><i>✓</i>Yangi testlar va migratsiyalar qo'shilgan</span>
+        <span><i>✓</i>CI 6/6 yashil, konfliktlar yo'q</span>
+        <span><i>✓</i>Branch protection va 1 review bajarilgan</span>
+      </div>
+    </div>
+  </div>
+  <div class="dash-grid two" style="margin-top:14px">
+    <div class="panel">
+      <div class="panel-head"><h2>Branch protection</h2><span class="hint">main + develop</span></div>
+      <div class="stat-line"><span>Pull Request talabi</span><b>Yoqilgan</b></div>
+      <div class="stat-line"><span>Kamida review</span><b>1 ta</b></div>
+      <div class="stat-line"><span>Majburiy check lar</span><b>build, test, lint, security</b></div>
+      <div class="stat-line"><span>Konfliktlar hal qilinishi</span><b>Majburiy</b></div>
+      <div class="stat-line"><span>Adminlar ham qoidaga bo'ysunadi</span><b>Ha</b></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Workflow namunasi</h2><span class="hint">.github/workflows/ci.yml</span></div>
+      <div class="yaml">name: ci
+on:
+  pull_request:
+    branches: [develop, main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '8.0.x' }
+      - run: dotnet restore
+      - run: dotnet build --no-restore
+      - run: dotnet test --no-build
+      - run: dotnet format --verify-no-changes</div>
+    </div>
+  </div>`;
+}
+function runPipeline() {
+  if (!can("ci.run")) return;
+  const prev = (db.ciRuns || [])[0];
+  const num = prev ? prev.number + 1 : 1;
+  const jobs = ["checkout","setup .NET","restore","build","test","lint","security","deploy"]
+    .map(name => ({ name, status:"running", duration:"—" }));
+  const run = { id:uid("run"), number:num, branch:"develop", commit:"local", status:"running",
+    started:nowLocal(), duration:"0m 00s", jobs };
+  db.ciRuns.unshift(run);
+  saveDB(); render();
+  toast("CI boshlandi", `Run #${num} ishga tushdi.`);
+  setTimeout(() => {
+    run.status = "success"; run.commit = "a1b2c3d"; run.duration = "2m 41s";
+    run.jobs = run.jobs.map((j,i)=>({ ...j, status:"success", duration:[6,11,20,44,52,15,22,3][i]+"s" }));
+    log("CI_RUN", `Run #${num} muvaffaqiyatli`);
+    saveDB(); if (currentView === "ci") render();
+    toast("CI yakunlandi", `Run #${num} · barcha check lar yashil.`);
+  }, 1500);
 }
 
 /* =========================================================
@@ -1932,6 +2468,8 @@ function renderSettings() {
       <div class="stat-line"><span>Sprintlar</span><b>${(db.sprints || []).length} ta</b></div>
       <div class="stat-line"><span>Issue lar</span><b>${(db.issues || []).length} ta</b></div>
       <div class="stat-line"><span>Risk lar</span><b>${(db.risks || []).length} ta</b></div>
+      <div class="stat-line"><span>Yashash yozuvlari</span><b>${(db.stays || []).length} ta</b></div>
+      <div class="stat-line"><span>Xizmat buyurtmalari</span><b>${(db.serviceOrders || []).length} ta</b></div>
       <div class="divider"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary" data-action="export">${icon("download",16)} JSON zaxira</button>
@@ -2679,6 +3217,17 @@ function onGlobalClick(e) {
     case "booking-checkin": checkInBooking(id); break;
     case "booking-checkout": checkOutBooking(id); break;
     case "booking-cancel": openCancelModal(id); break;
+    case "stay-checkin": openCheckInModal(); break;
+    case "stay-open": openStayDetails(id); break;
+    case "stay-checkout": openCheckOutModal(id); break;
+    case "stay-service": openServiceOrderModal(id); break;
+    case "service-add": openServiceModal(); break;
+    case "service-edit": openServiceModal(id); break;
+    case "service-delete": deleteService(id); break;
+    case "order-add": openServiceOrderModal(); break;
+    case "order-deliver": setOrderStatus(id, "delivered"); break;
+    case "order-cancel": setOrderStatus(id, "cancelled"); break;
+    case "ci-run": runPipeline(); break;
     case "payment-add": openPaymentModal(); break;
     case "user-add": openUserModal(); break;
     case "user-edit": openUserModal(id); break;
@@ -2703,6 +3252,10 @@ function onGlobalSubmit(e) {
   else if (type === "issue") saveIssue(form);
   else if (type === "cancel") saveCancel(form);
   else if (type === "risk") saveRisk(form);
+  else if (type === "checkin") saveCheckIn(form);
+  else if (type === "checkout") saveCheckOut(form);
+  else if (type === "service") saveService(form);
+  else if (type === "order") saveServiceOrder(form);
 }
 
 /* =========================================================

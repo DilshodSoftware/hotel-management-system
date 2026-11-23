@@ -11,12 +11,15 @@ Mehmonxona faoliyatini boshqarish uchun **bitta HTML faylda** ishlaydigan demo w
 - **Xonalar** — CRUD, holat boshqaruvi, qidirish, filtrlash, kartochka ko'rinishi
 - **Xona turlari** — narx, sig'im va tavsiflar katalogi
 - **Mijozlar** — mijoz kartasi, pasport/ID ma'lumotlari, qidiruv, takroriylikni aniqlash, CSV eksport
-- **Bronlar** — mavjudlikni tekshirish, narx hisoblash, tasdiqlash, check-in/check-out, no-show, bekor qilish
+- **Bronlar** — mavjudlikni tekshirish, narx hisoblash, tasdiqlash, no-show, bekor qilish
 - **Bronlar kalendari** — 14 kunlik bandlik ko'rinishi
+- **Joylashtirish** — check-in, check-out, haqiqiy kelish/chiqish vaqti, erta kelish/kech chiqish, qarz bilan chiqish
+- **Xizmatlar** — nonushta, restoran, kir yuvish, transfer, parking va boshqa xizmatlar; buyurtmalar va holatlar
 - **To'lovlar** — to'lov qayd etish, qoldiq va qarzdorlik nazorati
 - **Foydalanuvchilar** — rollar, bloklash/faollashtirish
 - **Sprintlar** — Jira uslubidagi backlog va board, story point, PR holati
 - **Reja va risklar** — Gantt diagrammasi, risk matritsasi va risk registri
+- **CI/CD** — GitHub Actions pipeline, PR review va branch protection ko'rinishi
 - **Sozlamalar** — JSON zaxira, import va demo ma'lumotlarni tiklash
 
 ## Ekran rasmlari
@@ -25,9 +28,19 @@ Mehmonxona faoliyatini boshqarish uchun **bitta HTML faylda** ishlaydigan demo w
 
 ![Bronlar kalendari](screenshots/bookings-calendar.png)
 
+### Joylashtirish va xizmatlar
+
+![Joylashtirish](screenshots/stays.png)
+
+![Xizmatlar](screenshots/services.png)
+
 ### Gantt va risk registri
 
 ![Gantt va risklar](screenshots/gantt-risk.png)
+
+### CI/CD va code review
+
+![CI/CD](screenshots/ci.png)
 
 ## Demo hisoblar
 
@@ -67,11 +80,15 @@ hotel-management-system/
 │   ├── Laboratoriya-1.docx
 │   ├── Laboratoriya-2.docx
 │   ├── Laboratoriya-3.docx
-│   └── Laboratoriya-4.docx
+│   ├── Laboratoriya-4.docx
+│   └── Laboratoriya-5.docx
 └── screenshots/
     ├── dashboard.png
     ├── bookings-calendar.png
-    └── gantt-risk.png
+    ├── stays.png
+    ├── services.png
+    ├── gantt-risk.png
+    └── ci.png
 ```
 
 ## Hujjatlar
@@ -81,6 +98,7 @@ hotel-management-system/
 - [Laboratoriya 2 — User story va Planning Poker](docs/Laboratoriya-2.docx)
 - [Laboratoriya 3 — Jira sprint, Git branch va PR](docs/Laboratoriya-3.docx)
 - [Laboratoriya 4 — Gantt, risk registri va bronlash](docs/Laboratoriya-4.docx)
+- [Laboratoriya 5 — Code Review, CI va joylashtirish](docs/Laboratoriya-5.docx)
 
 ## Texnik eslatmalar
 

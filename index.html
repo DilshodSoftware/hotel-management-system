@@ -1,0 +1,2714 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HMS — Mehmonxona boshqaruv tizimi</title>
+<style>
+  :root{
+    --navy:#1F3864; --navy-2:#16305A; --navy-3:#2A4A7A;
+    --blue:#2E75B6; --blue-soft:#DEEAF6; --bg:#EEF2F7;
+    --card:#FFFFFF; --text:#26364A; --muted:#7F8C9F;
+    --line:#E1E8F1; --line-2:#EDF1F6;
+    --green:#548235; --green-soft:#EAF4E5;
+    --orange:#C55A11; --orange-soft:#FBE9DC;
+    --yellow:#9C7600; --yellow-soft:#FBF2D6;
+    --red:#C00000; --red-soft:#FBE4E4;
+    --purple:#7030A0; --purple-soft:#EFE3F7;
+    --radius:12px; --shadow:0 10px 30px rgba(31,56,100,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  a{color:var(--blue);text-decoration:none}
+  .hidden{display:none!important}
+  .icon{display:inline-block;vertical-align:middle;flex:none;fill:none;stroke:currentColor;
+    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+  .nowrap{white-space:nowrap}
+
+  /* ---------- login ---------- */
+  .login{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr}
+  .login-left{
+    position:relative;overflow:hidden;color:#fff;padding:58px 62px;
+    background:linear-gradient(150deg,#122B52 0%,#1F3864 48%,#2E5C9A 100%);
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .login-left::before,.login-left::after{
+    content:"";position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.10);
+  }
+  .login-left::before{width:520px;height:520px;right:-190px;top:-150px}
+  .login-left::after{width:360px;height:360px;right:-80px;bottom:-150px}
+  .login-brand{display:flex;align-items:center;gap:14px;position:relative}
+  .login-logo{width:56px;height:56px;border-radius:14px;background:#fff;color:var(--navy);
+    display:grid;place-items:center;font-weight:800;letter-spacing:.5px;font-size:20px}
+  .login-brand b{display:block;font-size:19px;letter-spacing:.4px}
+  .login-brand span{display:block;font-size:13px;color:#B9CCE6;margin-top:2px}
+  .login-left h1{font-size:40px;line-height:1.22;margin:62px 0 16px;max-width:470px;position:relative}
+  .login-left p{font-size:17px;line-height:1.65;color:#C9D8EC;max-width:450px;margin:0;position:relative}
+  .login-feats{margin-top:38px;display:flex;flex-direction:column;gap:16px;position:relative}
+  .login-feat{display:flex;align-items:center;gap:12px;font-size:15px;color:#E4EDF9}
+  .login-feat .tick{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.14);
+    display:grid;place-items:center;color:#9FE3B0;flex:none}
+  .login-foot{position:absolute;left:62px;bottom:32px;font-size:12px;color:#8FA9C9}
+  .login-right{display:flex;align-items:center;justify-content:center;padding:28px}
+  .login-card{width:min(440px,100%);background:#fff;border-radius:18px;padding:34px 36px;
+    box-shadow:0 24px 70px rgba(31,56,100,.15)}
+  .login-card h2{font-size:26px;color:var(--navy);margin:0 0 6px}
+  .login-card .sub{color:var(--muted);font-size:13px;margin:0 0 24px}
+  .login-error{display:none;background:var(--red-soft);color:var(--red);border:1px solid #F3B9B9;
+    border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:14px}
+  .login-error.show{display:block}
+  .demo-box{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+  .demo-box .cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin-bottom:9px}
+  .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .demo-btn{text-align:left;background:#F7F9FC;border:1px solid var(--line);border-radius:8px;
+    padding:8px 10px;font-size:11.5px;color:var(--text);line-height:1.35}
+  .demo-btn:hover{border-color:#B4C7E7;background:#EEF4FB}
+  .demo-btn b{display:block;color:var(--navy);font-size:12px}
+  .login-hint{font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px}
+
+  /* ---------- app shell ---------- */
+  .app{display:flex;min-height:100vh}
+  .sidebar{
+    width:246px;background:linear-gradient(180deg,#1F3864,#16305A);color:#fff;
+    padding:22px 14px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:40;
+  }
+  .side-brand{display:flex;align-items:center;gap:11px;padding:0 8px 18px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .side-logo{width:40px;height:40px;border-radius:10px;background:#fff;color:var(--navy);
+    display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+  .side-brand b{display:block;font-size:14.5px;letter-spacing:.3px}
+  .side-brand span{display:block;font-size:10.5px;color:#AFC4DF;margin-top:1px}
+  .nav{display:flex;flex-direction:column;gap:3px;margin-top:18px;overflow-y:auto}
+  .nav-item{display:flex;align-items:center;gap:11px;height:40px;padding:0 12px;border-radius:8px;
+    color:#C9D8EC;font-size:13px;border:0;background:transparent;text-align:left;width:100%;transition:.15s}
+  .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav-item.active{background:#2E5C9A;color:#fff;font-weight:600;box-shadow:inset 3px 0 0 #8FC2F0}
+  .nav-item .icon{opacity:.9}
+  .side-foot{margin-top:auto;padding:12px 10px 4px;font-size:10.5px;color:#9FB4D2;line-height:1.5;
+    border-top:1px solid rgba(255,255,255,.1)}
+  .workspace{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:64px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;
+    gap:16px;padding:0 24px;position:sticky;top:0;z-index:30}
+  .menu-btn{display:none}
+  .crumb{font-size:12px;color:var(--muted);min-width:0}
+  .crumb b{color:var(--navy)}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .today{font-size:12px;color:var(--muted);white-space:nowrap}
+  .user-chip{display:flex;align-items:center;gap:9px;border-left:1px solid var(--line);padding-left:14px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--blue-soft);color:var(--navy);
+    display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+  .user-chip b{display:block;font-size:12.5px;line-height:1.2}
+  .user-chip span{display:block;font-size:10.5px;color:var(--muted)}
+  .view{padding:24px;width:100%;max-width:1560px;margin:0 auto;flex:1}
+  .sidebar-backdrop{display:none}
+
+  /* ---------- common ui ---------- */
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+  .page-head h1{font-size:26px;color:var(--navy);margin:0;line-height:1.25}
+  .page-head .sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .head-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 15px;
+    border-radius:9px;border:1px solid transparent;font-weight:600;font-size:13px;white-space:nowrap;transition:.15s}
+  .btn-primary{background:var(--navy);color:#fff}
+  .btn-primary:hover{background:var(--navy-3)}
+  .btn-secondary{background:#fff;border-color:var(--line);color:var(--text)}
+  .btn-secondary:hover{border-color:#B4C7E7;background:#F7FAFE}
+  .btn-danger{background:var(--red);color:#fff}
+  .btn-danger:hover{background:#A00000}
+  .btn-ghost{background:transparent;color:var(--muted)}
+  .btn-ghost:hover{background:#F2F6FB;color:var(--navy)}
+  .btn-sm{height:32px;padding:0 10px;font-size:12px;border-radius:7px}
+  .icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid transparent;background:transparent;
+    color:var(--muted);display:inline-grid;place-items:center}
+  .icon-btn:hover{background:#F2F6FB;color:var(--navy)}
+  .link-btn{border:0;background:transparent;color:var(--blue);font-weight:600;font-size:12px;padding:2px 4px}
+  .link-btn.danger{color:var(--red)}
+  .link-btn:hover{text-decoration:underline}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+  .panel-head h2{font-size:15px;color:var(--navy);margin:0}
+  .panel-head .hint{font-size:11.5px;color:var(--muted)}
+  .empty{padding:34px 16px;text-align:center;color:var(--muted);font-size:13px}
+  .empty b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:#5B6B80;margin-bottom:6px}
+  .input,select.input,textarea.input{width:100%;height:42px;border:1px solid #D5DDE8;border-radius:8px;
+    padding:0 11px;background:#FBFCFE;color:var(--text);outline:none;font-size:13px}
+  .input:focus,select.input:focus,textarea.input:focus{border-color:var(--blue);background:#fff;
+    box-shadow:0 0 0 3px rgba(46,117,182,.12)}
+  textarea.input{height:auto;min-height:88px;padding:10px 11px;resize:vertical;line-height:1.5}
+  .input.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,0,0,.08)}
+  .help{font-size:11px;color:var(--muted);margin-top:4px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form-grid .full{grid-column:1/-1}
+  .req{color:var(--red)}
+  .divider{height:1px;background:var(--line);margin:16px 0}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+  .stat{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 15px;overflow:hidden}
+  .stat .sicon{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:9px;
+    display:grid;place-items:center;background:var(--blue-soft);color:var(--navy)}
+  .stat .label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .stat .value{font-size:27px;font-weight:800;color:var(--navy);margin-top:5px;line-height:1.1}
+  .stat .hint{font-size:11px;color:var(--muted);margin-top:5px}
+  .stat.green .sicon{background:var(--green-soft);color:var(--green)} .stat.green .value{color:var(--green)}
+  .stat.orange .sicon{background:var(--orange-soft);color:var(--orange)} .stat.orange .value{color:var(--orange)}
+  .stat.red .sicon{background:var(--red-soft);color:var(--red)} .stat.red .value{color:var(--red)}
+  .stat.purple .sicon{background:var(--purple-soft);color:var(--purple)} .stat.purple .value{color:var(--purple)}
+
+  /* ---------- dashboard ---------- */
+  .dash-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:14px}
+  .dash-grid.two{grid-template-columns:1fr 1fr}
+  .chart{height:190px;display:flex;align-items:flex-end;gap:12px;padding:10px 4px 0;
+    background:linear-gradient(to top,transparent 24.7%,#EDF1F6 25%,transparent 25.4%),
+               linear-gradient(to top,transparent 49.7%,#EDF1F6 50%,transparent 50.4%),
+               linear-gradient(to top,transparent 74.7%,#EDF1F6 75%,transparent 75.4%);}
+  .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+  .bar{width:100%;max-width:36px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#2E75B6,#8FC2F0);
+    min-height:3px;position:relative;transition:.3s}
+  .bar span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--navy);font-weight:700}
+  .bar-label{font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .donut-wrap{display:flex;align-items:center;gap:18px;justify-content:center;padding:8px 0}
+  .donut{width:132px;height:132px;border-radius:50%;position:relative;flex:none;
+    background:conic-gradient(var(--green) 0 30%,var(--orange) 30% 50%,var(--blue) 50% 70%,var(--yellow) 70% 85%,var(--red) 85% 100%)}
+  .donut::after{content:"";position:absolute;inset:19px;background:#fff;border-radius:50%}
+  .donut-hole{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:2}
+  .donut-hole b{font-size:24px;color:var(--navy);line-height:1}
+  .donut-hole span{font-size:10px;color:var(--muted);display:block;margin-top:2px}
+  .legend{display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:#4A5A6E;min-width:135px}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px}
+  .legend b{float:right;color:var(--text);margin-left:12px}
+  .list{display:flex;flex-direction:column;gap:0}
+  .list-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line-2)}
+  .list-row:last-child{border:0}
+  .list-ava{width:34px;height:34px;border-radius:9px;background:#F2F6FB;color:var(--navy);
+    display:grid;place-items:center;font-weight:700;font-size:11px;flex:none}
+  .list-main{min-width:0;flex:1}
+  .list-main b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .list-main span{display:block;font-size:11px;color:var(--muted)}
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .quick button{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:#FBFCFE;
+    border-radius:9px;padding:10px 11px;font-size:12px;color:var(--text);text-align:left}
+  .quick button:hover{border-color:#B4C7E7;background:#EEF4FB}
+  .quick .qico{width:30px;height:30px;border-radius:8px;background:var(--blue-soft);color:var(--navy);
+    display:grid;place-items:center;flex:none}
+
+  /* ---------- toolbar / table ---------- */
+  .toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:14px 0}
+  .search{position:relative;flex:1;min-width:220px}
+  .search .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .search .input{padding-left:37px}
+  .toolbar .input,.toolbar select.input{width:auto;min-width:140px}
+  .toolbar .search .input{width:100%;min-width:0}
+  .view-toggle{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+  .view-toggle button{height:38px;width:42px;border:0;background:#fff;color:var(--muted);display:grid;place-items:center}
+  .view-toggle button.on{background:var(--navy);color:#fff}
+  .table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+  table.data{width:100%;border-collapse:collapse;min-width:760px}
+  table.data th{background:#F2F6FB;color:#5B6B80;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.data td{padding:11px 12px;border-bottom:1px solid var(--line-2);font-size:12.5px;vertical-align:middle}
+  table.data tr:last-child td{border-bottom:0}
+  table.data tbody tr:hover{background:#FAFCFF}
+  .cell-main{font-weight:700;color:var(--navy)}
+  .cell-sub{font-size:10.5px;color:var(--muted);margin-top:1px}
+  .actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:999px;
+    font-size:10.5px;font-weight:700;white-space:nowrap}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .chip.green{background:var(--green-soft);color:var(--green)}
+  .chip.orange{background:var(--orange-soft);color:var(--orange)}
+  .chip.blue{background:var(--blue-soft);color:var(--blue)}
+  .chip.yellow{background:var(--yellow-soft);color:var(--yellow)}
+  .chip.red{background:var(--red-soft);color:var(--red)}
+  .chip.gray{background:#EEF1F5;color:#5B6B80}
+  .chip.purple{background:var(--purple-soft);color:var(--purple)}
+  .money{font-weight:700;color:var(--navy);white-space:nowrap}
+
+  /* ---------- room cards ---------- */
+  .room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:13px}
+  .room-card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:.15s}
+  .room-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+  .room-thumb{height:104px;background:linear-gradient(145deg,#1F3864,#2E75B6);position:relative;padding:13px 14px;color:#fff}
+  .room-thumb.t2{background:linear-gradient(145deg,#2E5C9A,#5B9BD5)}
+  .room-thumb.t3{background:linear-gradient(145deg,#5B3A7E,#8E5BB5)}
+  .room-thumb.t4{background:linear-gradient(145deg,#8A5A1E,#C08A3E)}
+  .room-thumb .num{font-size:27px;font-weight:800;line-height:1}
+  .room-thumb .type{font-size:10.5px;color:#D6E3F3;margin-top:3px}
+  .room-thumb .st{position:absolute;right:10px;top:10px}
+  .room-body{padding:13px 14px}
+  .room-price{font-size:15px;font-weight:800;color:var(--navy)}
+  .room-price span{font-size:10px;color:var(--muted);font-weight:400}
+  .room-meta{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-top:6px}
+  .room-amen{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;min-height:22px}
+  .amen{font-size:9.5px;color:#5B6B80;background:#F2F6FB;border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+  .room-actions{display:flex;gap:5px;margin-top:11px;border-top:1px solid var(--line-2);padding-top:9px}
+
+  /* ---------- modal ---------- */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(13,25,45,.48);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}
+  .modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:15px;
+    box-shadow:0 30px 90px rgba(8,20,40,.32);animation:pop .16s ease}
+  .modal.narrow{width:min(520px,100%)}
+  .modal.wide{width:min(920px,100%)}
+  @keyframes pop{from{transform:translateY(8px);opacity:.5}to{transform:none;opacity:1}}
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:19px 22px;
+    border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:2}
+  .modal-head h2{font-size:18px;color:var(--navy);margin:0}
+  .modal-head p{font-size:12px;color:var(--muted);margin:4px 0 0}
+  .modal-body{padding:20px 22px}
+  .modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:15px 22px;border-top:1px solid var(--line);
+    background:#FAFCFF;position:sticky;bottom:0}
+  .stat-line{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px solid var(--line-2);font-size:12.5px}
+  .stat-line:last-child{border:0}
+  .stat-line span{color:var(--muted)} .stat-line b{color:var(--text)}
+  .amen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .chk{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;
+    min-height:36px;padding:0 9px;font-size:12px;color:#4A5A6E;background:#FBFCFE;cursor:pointer}
+  .chk input{accent-color:var(--blue);width:15px;height:15px;margin:0}
+  .chk:has(input:checked){border-color:#9DC3E6;background:#EEF4FB}
+  .tag-row{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{background:#F2F6FB;border:1px solid var(--line);border-radius:6px;padding:3px 7px;font-size:10.5px;color:#5B6B80}
+
+  /* ---------- toast ---------- */
+  .toast-root{position:fixed;right:20px;bottom:20px;z-index:200;display:flex;flex-direction:column;gap:9px;max-width:340px}
+  .toast{background:#fff;border-left:4px solid var(--green);box-shadow:0 12px 35px rgba(20,40,70,.18);
+    border-radius:10px;padding:11px 14px;font-size:12.5px;animation:toastIn .18s ease}
+  .toast b{display:block;color:var(--navy);font-size:12.5px;margin-bottom:1px}
+  .toast.error{border-left-color:var(--red)} .toast.error b{color:var(--red)}
+  .toast.info{border-left-color:var(--blue)} .toast.info b{color:var(--blue)}
+  @keyframes toastIn{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+
+  /* ---------- sprint board ---------- */
+  .sprint-hero{background:linear-gradient(135deg,#16305A,#2E5C9A);color:#fff;border-radius:13px;
+    padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden}
+  .sprint-hero::after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.12);right:-80px;top:-110px;pointer-events:none}
+  .sprint-hero h1{font-size:23px;margin:0;color:#fff;position:relative}
+  .sprint-hero .goal{font-size:12.5px;color:#D6E3F3;margin-top:5px;position:relative}
+  .sprint-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:#D6E3F3;position:relative}
+  .sprint-meta b{color:#fff}
+  .sprint-progress{height:8px;background:rgba(255,255,255,.2);border-radius:99px;margin-top:12px;overflow:hidden;position:relative}
+  .sprint-progress i{display:block;height:100%;background:#9FE3B0;border-radius:99px}
+  .board{display:grid;grid-template-columns:repeat(5,minmax(218px,1fr));gap:11px;overflow-x:auto;padding-bottom:4px}
+  .board-col{background:#F2F6FB;border:1px solid var(--line);border-radius:10px;padding:9px;min-width:218px;min-height:280px}
+  .board-col h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#5B6B80;margin:0 0 9px;
+    display:flex;justify-content:space-between;align-items:center}
+  .board-col h3 span{background:#fff;border:1px solid var(--line);border-radius:99px;padding:1px 7px;font-size:10px;color:var(--navy)}
+  .issue-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;transition:.15s}
+  .issue-card:hover{box-shadow:0 6px 18px rgba(31,56,100,.1);border-color:#B4C7E7}
+  .issue-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
+  .issue-key{font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:10px;font-weight:700;color:var(--blue)}
+  .issue-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.35;margin-top:7px}
+  .issue-meta{display:flex;gap:7px;flex-wrap:wrap;font-size:9.5px;color:var(--muted);margin-top:8px;align-items:center}
+  .issue-meta .sp{background:#EEF4FB;color:var(--navy);border-radius:5px;padding:1px 5px;font-weight:700}
+  .prio{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+  .prio.high{color:var(--red)} .prio.medium{color:var(--orange)} .prio.low{color:var(--muted)}
+  .branch{font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:9px;color:#5B6B80;
+    background:#F7F9FC;border:1px solid var(--line-2);border-radius:4px;padding:3px 5px;margin-top:8px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .issue-actions{display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--line-2);padding-top:6px}
+  .issue-actions button{width:26px;height:24px;border:1px solid var(--line);background:#fff;border-radius:5px;color:var(--muted);font-size:12px}
+  .issue-actions button:hover:not(:disabled){border-color:#9DC3E6;color:var(--navy);background:#EEF4FB}
+  .issue-actions button:disabled{opacity:.35;cursor:default}
+  .pr-row{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--line-2);font-size:11.5px}
+  .pr-row:last-child{border:0}
+  .pr-num{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--blue);font-weight:700;flex:none;padding-top:2px}
+  .pr-main{min-width:0;flex:1}
+  .pr-main b{display:block;font-size:11.5px;color:var(--text);line-height:1.35}
+  .pr-main span{display:block;font-size:9.5px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .pr-state{flex:none;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px}
+  .pr-state.merged{background:var(--purple-soft);color:var(--purple)}
+  .pr-state.review{background:var(--yellow-soft);color:var(--yellow)}
+  .pr-state.draft{background:#EEF1F5;color:#5B6B80}
+  .git-note{font-size:10.5px;color:var(--muted);line-height:1.6}
+  .git-note code{font-family:ui-monospace,Consolas,monospace;font-size:9.5px;background:#F2F6FB;padding:1px 4px;border-radius:3px;color:var(--navy)}
+  @media(max-width:720px){.board{grid-template-columns:repeat(5,minmax(200px,1fr))}}
+
+  /* ---------- booking calendar ---------- */
+  .cal-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:11px}
+  table.cal{border-collapse:separate;border-spacing:0;min-width:1120px;width:100%}
+  table.cal th,table.cal td{border-bottom:1px solid var(--line-2);border-right:1px solid #F1F5FA}
+  table.cal th{padding:7px 4px;background:#F2F6FB;font-size:10px;color:#5B6B80;font-weight:600;text-align:center;white-space:nowrap}
+  table.cal th span{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:#7F8C9F}
+  table.cal th b{display:block;font-size:14px;color:var(--navy);line-height:1.2}
+  table.cal th small{display:block;font-size:8.5px;color:#9AA8BA}
+  table.cal th.cal-today{background:#DEEAF6;box-shadow:inset 0 -2px 0 var(--blue)}
+  table.cal td{height:39px;text-align:center;padding:3px;background:#fff}
+  table.cal tr:last-child td{border-bottom:0}
+  .cal-room{position:sticky;left:0;z-index:2;background:#F7F9FC !important;text-align:left !important;
+    min-width:116px;padding:7px 10px !important}
+  .cal-room b{display:block;font-size:12px;color:var(--navy)}
+  .cal-room span{display:block;font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:105px}
+  .cal-book{display:inline-block;max-width:92%;padding:3px 6px;border-radius:5px;font-size:9px;font-weight:800;
+    font-family:ui-monospace,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cal-book.green{background:var(--green-soft);color:var(--green)}
+  .cal-book.blue{background:var(--blue-soft);color:var(--blue)}
+  .cal-book.yellow{background:var(--yellow-soft);color:var(--yellow)}
+  .cal-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:10.5px;color:#5B6B80;margin-top:9px}
+  .cal-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+  .cal-legend .pending{background:var(--yellow)} .cal-legend .confirmed{background:var(--green)} .cal-legend .checked_in{background:var(--blue)}
+
+  /* ---------- plan / gantt ---------- */
+  .plan-tabs{display:flex;gap:4px;background:#F2F6FB;border:1px solid var(--line);border-radius:9px;padding:4px;width:fit-content}
+  .plan-tabs button{height:32px;padding:0 14px;border:0;border-radius:6px;background:transparent;font-size:11.5px;color:#5B6B80;font-weight:600}
+  .plan-tabs button.on{background:#fff;color:var(--navy);box-shadow:0 2px 7px rgba(31,56,100,.08)}
+  .gantt{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+  .gantt-head{display:grid;grid-template-columns:220px repeat(12,1fr);gap:0;font-size:9px;color:#7F8C9F;
+    text-transform:uppercase;letter-spacing:.05em;padding-bottom:7px;border-bottom:1px solid var(--line-2)}
+  .gantt-head span{text-align:center}
+  .gantt-head span:first-child{text-align:left}
+  .gantt-row{display:grid;grid-template-columns:220px 1fr;align-items:center;border-bottom:1px solid #F4F7FB;min-height:40px}
+  .gantt-row:last-child{border:0}
+  .gantt-label{font-size:11px;color:#34495E;padding-right:10px}
+  .gantt-label b{display:block;color:var(--navy);font-size:11.5px}
+  .gantt-label span{font-size:9px;color:var(--muted)}
+  .gantt-track{display:grid;grid-template-columns:repeat(12,1fr);height:26px;position:relative;
+    background:linear-gradient(to right,#EDF1F6 1px,transparent 1px) 0 0/8.333% 100%}
+  .gantt-bar{height:18px;border-radius:5px;background:#B4C7E7;position:relative;overflow:hidden;align-self:center}
+  .gantt-bar i{display:block;height:100%;background:var(--blue);border-radius:5px}
+  .gantt-bar.done i{background:var(--green)}
+  .gantt-bar.active i{background:var(--orange)}
+  .gantt-bar span{position:absolute;right:5px;top:0;font-size:8px;line-height:18px;color:#fff;font-weight:700}
+  .gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);opacity:.55;z-index:3}
+  .risk-score{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;border-radius:6px;font-weight:800;font-size:11px}
+  .risk-score.high{background:var(--red-soft);color:var(--red)}
+  .risk-score.medium{background:var(--orange-soft);color:var(--orange)}
+  .risk-score.low{background:var(--green-soft);color:var(--green)}
+  .risk-matrix{display:grid;grid-template-columns:24px repeat(5,1fr);gap:4px;max-width:360px}
+  .risk-matrix div{height:42px;border-radius:5px;background:#F2F6FB;display:grid;place-items:center;font-size:9px;color:#7F8C9F}
+  .risk-matrix .lbl{background:transparent;font-weight:700;color:#5B6B80}
+  .risk-matrix .m1{background:#EAF4E5}.risk-matrix .m2{background:#FBF2D6}.risk-matrix .m3{background:#FBE9DC}.risk-matrix .m4{background:#FBE4E4}
+
+  /* ---------- responsive ---------- */
+  @media(max-width:1180px){
+    .stats{grid-template-columns:repeat(3,1fr)}
+    .dash-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:980px){
+    .sidebar{position:fixed;left:-260px;top:0;transition:left .2s ease;box-shadow:0 0 0 100vmax rgba(0,0,0,0)}
+    .sidebar.open{left:0;box-shadow:20px 0 60px rgba(10,20,40,.25)}
+    .sidebar-backdrop.show{display:block;position:fixed;inset:0;background:rgba(10,20,40,.35);z-index:35}
+    .menu-btn{display:inline-grid}
+    .login{grid-template-columns:1fr}
+    .login-left{display:none}
+    .login-right{padding:20px;background:linear-gradient(150deg,#16305A,#2E5C9A);min-height:100vh}
+    .login-card{padding:28px 24px}
+    .topbar{padding:0 16px}
+    .view{padding:18px 16px}
+    .today{display:none}
+  }
+  @media(max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .form-grid{grid-template-columns:1fr}
+    .amen-grid{grid-template-columns:1fr 1fr}
+    .page-head h1{font-size:22px}
+    .user-chip .who{display:none}
+    .quick{grid-template-columns:1fr}
+    .donut-wrap{flex-direction:column}
+    .modal-body{padding:16px}
+    .modal-head{padding:15px 16px}
+    .modal-foot{padding:12px 16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ SVG ICONS ============ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6"/><path d="M3 18v2M21 18v2M3 14h18"/><path d="M7 10V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 18 9 5 9-5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.5a5.5 5.5 0 0 1 3 5.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h2M14 14h2M8 17h2M14 17h2"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/><path d="M6 15h4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 5 3.3 8.3 7 10 3.7-1.7 7-5 7-10V6l-7-3Z"/><path d="m9.2 12 2 2 3.8-4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.9l.06.06-2.6 2.6-.06-.06a1.7 1.7 0 0 0-1.9-.34 1.7 1.7 0 0 0-1 1.55V21h-3.7v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.9.34l-.06.06-2.6-2.6.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3v-3.7h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.9l-.06-.06 2.6-2.6.06.06a1.7 1.7 0 0 0 1.9.34 1.7 1.7 0 0 0 1-1.55V3h3.7v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.9-.34l.06-.06 2.6 2.6-.06.06a1.7 1.7 0 0 0-.34 1.9 1.7 1.7 0 0 0 1.55 1H21v3.7h-.09a1.7 1.7 0 0 0-1.55 1Z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="m14.5 5.5 3 3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14"/><path d="M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.7"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5"/><path d="M14 8l4 4-4 4M9 12h9"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v5M12 17.2v.3"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 9h4a1 1 0 0 1 1 1v11M2 21h20"/><path d="M8 8h3M8 12h3M8 16h3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-money" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v6M18 9v6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.7"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M17 12v3M20 12v2"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="4" y="3" width="7" height="8" rx="1"/><rect x="13" y="3" width="7" height="8" rx="1"/><rect x="4" y="13" width="7" height="8" rx="1"/><rect x="13" y="13" width="7" height="8" rx="1"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 3h3l1.5 4-2 1.2a13 13 0 0 0 6.3 6.3l1.2-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2Z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.2"/></symbol>
+</svg>
+
+<!-- ============ LOGIN ============ -->
+<div class="login" id="loginScreen">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="login-logo">HMS</div>
+      <div><b>MEHMONXONA</b><span>Boshqaruv tizimi</span></div>
+    </div>
+    <h1>Mehmonxonani<br>bitta tizimda<br>boshqaring</h1>
+    <p>Xonalar, mijozlar, bronlar, joylashtirish va to'lovlar — barchasi yagona xavfsiz web ilovada.</p>
+    <div class="login-feats">
+      <div class="login-feat"><span class="tick">✓</span>Xonalar va bandlik nazorati</div>
+      <div class="login-feat"><span class="tick">✓</span>Bron va check-in / check-out</div>
+      <div class="login-feat"><span class="tick">✓</span>To'lovlar va moliyaviy hisobotlar</div>
+      <div class="login-feat"><span class="tick">✓</span>Rollar va ruxsatlar asosida kirish</div>
+    </div>
+    <div class="login-foot">© 2026 HMS · Iskandarov Dilshodbek · 4-mavzu amaliy loyihasi</div>
+  </div>
+  <div class="login-right">
+    <div class="login-card">
+      <h2>Tizimga kirish</h2>
+      <p class="sub">Davom etish uchun hisobingizga kiring.</p>
+      <div class="login-error" id="loginError"></div>
+      <form id="loginForm" autocomplete="off">
+        <div class="field" style="margin-bottom:13px">
+          <label>Login yoki e-mail</label>
+          <input class="input" id="loginEmail" type="text" placeholder="admin@hms.uz" required>
+        </div>
+        <div class="field" style="margin-bottom:16px">
+          <label>Parol</label>
+          <input class="input" id="loginPassword" type="password" placeholder="••••••••" required>
+        </div>
+        <button class="btn btn-primary" style="width:100%;height:44px" type="submit">Kirish</button>
+      </form>
+      <div class="demo-box">
+        <div class="cap">Demo hisoblar</div>
+        <div class="demo-grid">
+          <button class="demo-btn" data-demo="admin"><b>Administrator</b>admin@hms.uz</button>
+          <button class="demo-btn" data-demo="manager"><b>Menejer</b>manager@hms.uz</button>
+          <button class="demo-btn" data-demo="reception"><b>Resepsiyonist</b>reception@hms.uz</button>
+          <button class="demo-btn" data-demo="accountant"><b>Buxgalter</b>accountant@hms.uz</button>
+        </div>
+      </div>
+      <div class="login-hint">Demo parollar: admin123, manager123, reception123, account123</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app hidden" id="app">
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="side-logo">HMS</div>
+      <div><b>MEHMONXONA</b><span>Boshqaruv tizimi</span></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">Mehmonxona boshqaruv tizimi<br>Iskandarov Dilshodbek · 2026</div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menyu"></button>
+      <div class="crumb" id="crumb"></div>
+      <div class="top-right">
+        <div class="today" id="todayLabel"></div>
+        <div class="user-chip">
+          <div class="avatar" id="userAvatar">A</div>
+          <div class="who"><b id="userName">Administrator</b><span id="userRole">Administrator</span></div>
+          <button class="icon-btn" id="logoutBtn" title="Chiqish"></button>
+        </div>
+      </div>
+    </header>
+    <main class="view" id="view"></main>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast-root" id="toastRoot"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const DB_KEY = "hms_app_v1";
+const SESSION_KEY = "hms_session_v1";
+const DB_VERSION = 3;
+
+function icon(name, size = 18) {
+  return `<svg class="icon" width="${size}" height="${size}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+}
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
+function money(n) {
+  const v = Math.round(Number(n) || 0);
+  return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " so'm";
+}
+function todayStr() { return isoDate(new Date()); }
+function isoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function addDays(n, base = new Date()) {
+  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  d.setDate(d.getDate() + Number(n));
+  return isoDate(d);
+}
+function fmtDate(s) {
+  if (!s) return "—";
+  const p = s.split("-");
+  return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : s;
+}
+function fmtDateShort(s) {
+  if (!s) return "—";
+  const p = s.split("-");
+  return p.length === 3 ? `${p[2]}.${p[1]}` : s;
+}
+function nights(a, b) {
+  const t1 = new Date(a + "T00:00:00");
+  const t2 = new Date(b + "T00:00:00");
+  return Math.max(0, Math.round((t2 - t1) / 86400000));
+}
+function uid(prefix = "id") {
+  return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function initials(name) {
+  return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0].toUpperCase()).join("");
+}
+function clamp(n, a, b) { return Math.min(b, Math.max(a, n)); }
+function monthKey(d = new Date()) { return isoDate(d).slice(0, 7); }
+
+const MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+const WEEKDAYS = ["yakshanba","dushanba","seshanba","chorshanba","payshanba","juma","shanba"];
+const WEEKDAYS_SHORT = ["Yak","Dush","Sesh","Chor","Pay","Jum","Shan"];
+
+function todayLabel() {
+  const d = new Date();
+  return `${d.getDate()}-${MONTHS[d.getMonth()]}, ${d.getFullYear()} · ${WEEKDAYS[d.getDay()]}`;
+}
+
+/* =========================================================
+   CONSTANTS
+   ========================================================= */
+const ROOM_STATUS = {
+  available:   { label: "Bo'sh va tayyor", cls: "green" },
+  reserved:    { label: "Band",            cls: "orange" },
+  occupied:    { label: "Yashamoqda",      cls: "blue" },
+  cleaning:    { label: "Tozalanmoqda",    cls: "yellow" },
+  maintenance: { label: "Ta'mirda",        cls: "red" }
+};
+const BOOKING_STATUS = {
+  pending:    { label: "Kutilmoqda",     cls: "yellow" },
+  confirmed:  { label: "Tasdiqlangan",   cls: "green" },
+  checked_in: { label: "Joylashtirilgan",cls: "blue" },
+  completed:  { label: "Yakunlangan",    cls: "gray" },
+  cancelled:  { label: "Bekor qilingan", cls: "red" },
+  no_show:    { label: "Kelmagan",       cls: "orange" }
+};
+const ISSUE_STATUS = {
+  backlog:  { label:"Backlog",     cls:"gray" },
+  todo:     { label:"To Do",       cls:"blue" },
+  progress: { label:"In Progress", cls:"orange" },
+  review:   { label:"Review",      cls:"purple" },
+  done:     { label:"Done",        cls:"green" }
+};
+const ISSUE_TYPE = {
+  story: { label:"Story", cls:"blue" },
+  task:  { label:"Task",  cls:"gray" },
+  bug:   { label:"Bug",   cls:"red" }
+};
+const ISSUE_ORDER = ["backlog","todo","progress","review","done"];
+const TRANSITIONS = {
+  available:   ["reserved", "cleaning", "maintenance"],
+  reserved:    ["available", "occupied"],
+  occupied:    ["cleaning"],
+  cleaning:    ["available", "maintenance"],
+  maintenance: ["available"]
+};
+const ROLE_LABEL = {
+  admin: "Administrator",
+  manager: "Menejer",
+  receptionist: "Resepsiyonist",
+  accountant: "Buxgalter"
+};
+const ABILITIES = {
+  admin: ["*"],
+  manager: ["room.create","room.edit","room.delete","room.status","type.manage",
+            "client.create","client.edit","client.sensitive","client.export",
+            "booking.create","booking.checkin","booking.checkout","booking.cancel",
+            "payment.create","sprint.manage","plan.manage"],
+  receptionist: ["room.status","client.create","booking.create","booking.edit","booking.confirm","booking.checkin","booking.checkout","booking.cancel"],
+  accountant: ["payment.create"]
+};
+const NAV = [
+  { id:"dashboard", label:"Dashboard", icon:"grid", roles:["admin","manager","receptionist","accountant"] },
+  { id:"sprint", label:"Sprintlar", icon:"cards", roles:["admin","manager"] },
+  { id:"plan", label:"Reja va risklar", icon:"calendar", roles:["admin","manager"] },
+  { id:"rooms", label:"Xonalar", icon:"bed", roles:["admin","manager","receptionist"] },
+  { id:"room-types", label:"Xona turlari", icon:"layers", roles:["admin","manager"] },
+  { id:"clients", label:"Mijozlar", icon:"users", roles:["admin","manager","receptionist"] },
+  { id:"bookings", label:"Bronlar", icon:"calendar", roles:["admin","manager","receptionist"] },
+  { id:"payments", label:"To'lovlar", icon:"card", roles:["admin","manager","accountant"] },
+  { id:"users", label:"Foydalanuvchilar", icon:"shield", roles:["admin"] },
+  { id:"settings", label:"Sozlamalar", icon:"settings", roles:["admin"] }
+];
+
+/* =========================================================
+   STORAGE
+   ========================================================= */
+let db = null;
+let session = null;
+const memory = { db:null, session:null };
+let currentUser = null;
+let currentView = "dashboard";
+let roomView = "table";
+let filters = { q:"", type:"", status:"", floor:"", sort:"number" };
+let bookingFilters = { q:"", status:"" };
+let bookingView = "table";
+let clientQuery = "";
+let clientFilter = "all";
+let paymentQuery = "";
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && (data.version === 1 || data.version === 2)) return migrateDB(data);
+      if (data && data.version === DB_VERSION) return data;
+    }
+  } catch {}
+  return memory.db;
+}
+function migrateDB(d) {
+  d.clients = (d.clients || []).map(c => ({
+    ...c,
+    docType: c.docType || "passport",
+    docNumber: c.docNumber || c.passport || "",
+    country: c.country || "O'zbekiston",
+    birthDate: c.birthDate || "",
+    address: c.address || "",
+    isRegular: !!c.isRegular,
+    createdAt: c.createdAt || todayStr()
+  }));
+  d.clients.forEach(c => { delete c.passport; });
+  d.bookings = (d.bookings || []).map(b => ({
+    ...b,
+    status: b.status === "reserved" ? "confirmed" : b.status === "checked_out" ? "completed" : b.status,
+    adults: b.adults ?? b.guests ?? 1,
+    children: b.children ?? 0,
+    guests: b.guests ?? ((b.adults ?? 1) + (b.children ?? 0)),
+    priceHistory: b.priceHistory || []
+  }));
+  const fresh = seedDB();
+  d.sprints = d.sprints || fresh.sprints;
+  d.issues = d.issues || fresh.issues;
+  d.prs = d.prs || fresh.prs;
+  d.project = d.project || fresh.project;
+  d.risks = d.risks || fresh.risks;
+  d.version = DB_VERSION;
+  return d;
+}
+function saveDB() {
+  memory.db = db;
+  try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch {}
+}
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return memory.session;
+}
+function saveSession(s) {
+  memory.session = s;
+  try {
+    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {}
+}
+
+/* =========================================================
+   SEED
+   ========================================================= */
+function seedDB() {
+  const t = todayStr();
+  const day = n => addDays(n);
+  const types = [
+    { id:"rt_std", code:"STD", name:"Standart", capacity:2, basePrice:450000,
+      description:"Bir yoki ikki kishilik, shahar manzarali oddiy xona." },
+    { id:"rt_dbl", code:"DBL", name:"Ikki kishilik", capacity:2, basePrice:620000,
+      description:"Katta karavot, ish stoli va alohida hammom." },
+    { id:"rt_jsu", code:"JSU", name:"Yarim lyuks", capacity:3, basePrice:850000,
+      description:"Yashash va ish zonasi ajratilgan keng xona." },
+    { id:"rt_sui", code:"SUI", name:"Lyuks", capacity:4, basePrice:1450000,
+      description:"Alohida yashash xonasi va premium qulayliklar." },
+    { id:"rt_fam", code:"FAM", name:"Oilaviy xona", capacity:5, basePrice:1100000,
+      description:"Bolalar uchun alohida joy va qo'shimcha karavot." }
+  ];
+  const amenities = [
+    { id:"a_wifi", name:"Wi-Fi", icon:"📶" },
+    { id:"a_tv", name:"Televizor", icon:"📺" },
+    { id:"a_ac", name:"Konditsioner", icon:"❄" },
+    { id:"a_bar", name:"Minibar", icon:"🥤" },
+    { id:"a_safe", name:"Seyf", icon:"🔐" },
+    { id:"a_balcony", name:"Balkon", icon:"🌅" },
+    { id:"a_desk", name:"Ish stoli", icon:"🪑" },
+    { id:"a_shower", name:"Dush", icon:"🚿" }
+  ];
+  const base = (id,num,floor,typeId,price,cap,status,amen,desc) => ({
+    id, roomNumber:num, floor, roomTypeId:typeId, pricePerNight:price, maxOccupancy:cap,
+    status, amenities:amen, description:desc, isActive:true,
+    history: [{ from:"available", to:status, reason:"Boshlang'ich holat", at:t, by:"Tizim" }]
+  });
+  const rooms = [
+    base("r101","101",1,"rt_std",450000,2,"available",["a_wifi","a_tv","a_ac"],"Shahar manzarasi, ikki kishilik karavot."),
+    base("r102","102",1,"rt_dbl",620000,2,"reserved",["a_wifi","a_tv","a_ac","a_safe"],"Katta karavot va ish stoli."),
+    base("r103","103",1,"rt_std",450000,2,"cleaning",["a_wifi","a_tv"],"Iqtisodiy xona, ichki hovli manzarasi."),
+    base("r201","201",2,"rt_jsu",850000,3,"occupied",["a_wifi","a_tv","a_ac","a_bar","a_desk"],"Yashash va ish zonasi ajratilgan."),
+    base("r202","202",2,"rt_dbl",620000,2,"available",["a_wifi","a_tv","a_ac","a_safe"],"Sokin tomondagi ikki kishilik xona."),
+    base("r203","203",2,"rt_std",450000,2,"maintenance",["a_wifi","a_tv"],"Hammom ta'mirda."),
+    base("r301","301",3,"rt_sui",1450000,4,"reserved",["a_wifi","a_tv","a_ac","a_bar","a_safe","a_balcony"],"Panoramik manzara va alohida yashash xonasi."),
+    base("r302","302",3,"rt_jsu",850000,3,"occupied",["a_wifi","a_tv","a_ac","a_bar","a_desk"],"Keng yarim lyuks, balkon bilan."),
+    base("r303","303",3,"rt_fam",1100000,5,"available",["a_wifi","a_tv","a_ac","a_bar","a_safe"],"Oilaviy xona, bolalar uchun alohida joy."),
+    base("r401","401",4,"rt_sui",1450000,4,"reserved",["a_wifi","a_tv","a_ac","a_bar","a_safe","a_balcony"],"Premium lyuks, shahar markazi manzarasi."),
+    base("r402","402",4,"rt_fam",1100000,5,"reserved",["a_wifi","a_tv","a_ac","a_bar"],"Oilaviy xona, qo'shimcha karavot."),
+    base("r403","403",4,"rt_std",450000,2,"cleaning",["a_wifi","a_tv","a_ac"],"Standart xona, ish stoli bilan.")
+  ];
+  const clients = [
+    { id:"c1", firstName:"Aziz", lastName:"Karimov", phone:"+998 90 123 45 67", email:"aziz.karimov@mail.uz",
+      docType:"passport", docNumber:"AA1234567", country:"O'zbekiston", birthDate:"1988-04-12",
+      address:"Urganch sh., Al-Xorazmiy ko'chasi 12", notes:"Doimiy mijoz, lyuks xonalarni afzal ko'radi.",
+      isRegular:true, createdAt:day(-120) },
+    { id:"c2", firstName:"Dilnoza", lastName:"Rahimova", phone:"+998 91 234 56 78", email:"dilnoza.r@mail.uz",
+      docType:"id_card", docNumber:"ID7654321", country:"O'zbekiston", birthDate:"1994-09-23",
+      address:"Urganch sh., Amir Temur ko'chasi 8", notes:"", isRegular:false, createdAt:day(-90) },
+    { id:"c3", firstName:"Sardor", lastName:"Toshmatov", phone:"+998 93 345 67 89", email:"sardor.t@mail.uz",
+      docType:"passport", docNumber:"AC1122334", country:"O'zbekiston", birthDate:"1985-01-17",
+      address:"Xiva sh., Ichan-Qal'a 4", notes:"Kompaniya hisobidan to'lov.", isRegular:false, createdAt:day(-75) },
+    { id:"c4", firstName:"Malika", lastName:"Yusupova", phone:"+998 94 456 78 90", email:"malika.y@mail.uz",
+      docType:"passport", docNumber:"AD4455667", country:"O'zbekiston", birthDate:"1990-06-05",
+      address:"Urganch sh., Bobur ko'chasi 21", notes:"", isRegular:false, createdAt:day(-60) },
+    { id:"c5", firstName:"Jasur", lastName:"Bekmurodov", phone:"+998 95 567 89 01", email:"jasur.b@mail.uz",
+      docType:"id_card", docNumber:"ID7788990", country:"O'zbekiston", birthDate:"1992-11-30",
+      address:"Urganch sh., Navoiy ko'chasi 33", notes:"Oilaviy xona so'raydi.", isRegular:true, createdAt:day(-45) },
+    { id:"c6", firstName:"Nargiza", lastName:"Saidova", phone:"+998 97 678 90 12", email:"nargiza.s@mail.uz",
+      docType:"passport", docNumber:"AF3344556", country:"Turkmaniston", birthDate:"1987-03-14",
+      address:"Dashoguz sh., Turkmanboshi ko'chasi 7", notes:"Chet el fuqarosi.", isRegular:false, createdAt:day(-30) }
+  ];
+  const bookings = [
+    { id:"b1", code:"B-2026-001", clientId:"c1", roomId:"r201", checkIn:day(-1), checkOut:day(1), adults:2, children:0, guests:2, status:"checked_in", total:1700000, createdAt:day(-3), notes:"Kechki ovqat buyurtmasi bor.", priceHistory:[] },
+    { id:"b2", code:"B-2026-002", clientId:"c2", roomId:"r102", checkIn:t, checkOut:day(3), adults:2, children:0, guests:2, status:"confirmed", total:1860000, createdAt:day(-2), notes:"", priceHistory:[] },
+    { id:"b3", code:"B-2026-003", clientId:"c3", roomId:"r401", checkIn:day(2), checkOut:day(5), adults:2, children:0, guests:2, status:"confirmed", total:4350000, createdAt:day(-1), notes:"Kompaniya hisob-fakturasi.", priceHistory:[] },
+    { id:"b4", code:"B-2026-004", clientId:"c4", roomId:"r302", checkIn:day(-2), checkOut:t, adults:2, children:0, guests:2, status:"checked_in", total:1700000, createdAt:day(-5), notes:"", priceHistory:[] },
+    { id:"b5", code:"B-2026-005", clientId:"c5", roomId:"r301", checkIn:t, checkOut:day(2), adults:2, children:2, guests:4, status:"confirmed", total:2900000, createdAt:day(-1), notes:"Bolalar uchun qo'shimcha karavot.", priceHistory:[] },
+    { id:"b6", code:"B-2026-006", clientId:"c6", roomId:"r303", checkIn:day(-3), checkOut:day(-1), adults:2, children:1, guests:3, status:"completed", total:2200000, createdAt:day(-6), notes:"", priceHistory:[] },
+    { id:"b7", code:"B-2026-007", clientId:"c2", roomId:"r402", checkIn:day(4), checkOut:day(6), adults:2, children:0, guests:2, status:"pending", total:2200000, createdAt:day(-1), notes:"Kelish vaqtini 14:00 dan keyin.", priceHistory:[] },
+    { id:"b8", code:"B-2026-008", clientId:"c3", roomId:"r403", checkIn:day(-5), checkOut:day(-3), adults:1, children:0, guests:1, status:"no_show", total:900000, createdAt:day(-8), notes:"Mehmon kelmadi.", priceHistory:[] }
+  ];
+  const payments = [
+    { id:"p1", bookingId:"b1", amount:850000, method:"card", status:"paid", date:day(-1), note:"Birinchi kecha uchun avans" },
+    { id:"p2", bookingId:"b2", amount:620000, method:"cash", status:"paid", date:day(-2), note:"Bron uchun oldindan to'lov" },
+    { id:"p3", bookingId:"b3", amount:1450000, method:"transfer", status:"paid", date:day(-1), note:"Kompaniya avansi" },
+    { id:"p4", bookingId:"b4", amount:1700000, method:"card", status:"paid", date:day(-2), note:"To'liq to'lov" },
+    { id:"p5", bookingId:"b6", amount:2200000, method:"card", status:"paid", date:day(-3), note:"To'liq to'lov" }
+  ];
+  const users = [
+    { id:"u1", name:"Iskandarov Dilshodbek", email:"admin@hms.uz", password:"admin123", role:"admin", active:true },
+    { id:"u2", name:"Shahnoza Qodirova", email:"manager@hms.uz", password:"manager123", role:"manager", active:true },
+    { id:"u3", name:"Bekzod Ergashev", email:"reception@hms.uz", password:"reception123", role:"receptionist", active:true },
+    { id:"u4", name:"Madina Xolmatova", email:"accountant@hms.uz", password:"account123", role:"accountant", active:true }
+  ];
+  const sprints = [
+    { id:"spr3", name:"Sprint 3", goal:"Mijozlar moduli: ro'yxat, karta, qidiruv va maxfiylik",
+      start:day(-3), end:day(10), status:"active", capacity:20 }
+  ];
+  const issues = [
+    { id:"iss101", key:"HMS-101", title:"Mijozlar ro'yxati va qidiruv", type:"story", points:3,
+      status:"done", assignee:"Shahnoza Q.", priority:"high", component:"Frontend",
+      branch:"feature/HMS-101-clients-list", pr:41, labels:["clients","frontend"], sprintId:"spr3", inSprint:true },
+    { id:"iss102", key:"HMS-102", title:"Mijoz kartasi va tahrirlash", type:"story", points:3,
+      status:"done", assignee:"Bekzod E.", priority:"high", component:"Frontend",
+      branch:"feature/HMS-102-client-card", pr:42, labels:["clients","frontend"], sprintId:"spr3", inSprint:true },
+    { id:"iss103", key:"HMS-103", title:"Yangi mijoz qo'shish formasi", type:"story", points:3,
+      status:"done", assignee:"Bekzod E.", priority:"high", component:"Frontend",
+      branch:"feature/HMS-103-client-form", pr:43, labels:["clients","frontend"], sprintId:"spr3", inSprint:true },
+    { id:"iss104", key:"HMS-104", title:"Pasport va ID-karta validatsiyasi", type:"task", points:2,
+      status:"review", assignee:"Dilshod I.", priority:"high", component:"Backend",
+      branch:"feature/HMS-104-doc-validation", pr:44, labels:["clients","backend","validation"], sprintId:"spr3", inSprint:true },
+    { id:"iss105", key:"HMS-105", title:"Takroriy mijozlarni aniqlash", type:"story", points:3,
+      status:"progress", assignee:"Dilshod I.", priority:"high", component:"Backend",
+      branch:"feature/HMS-105-duplicates", pr:null, labels:["clients","backend"], sprintId:"spr3", inSprint:true },
+    { id:"iss106", key:"HMS-106", title:"Mijoz bronlari tarixini ko'rsatish", type:"story", points:2,
+      status:"todo", assignee:"Shahnoza Q.", priority:"medium", component:"Frontend",
+      branch:"feature/HMS-106-client-history", pr:null, labels:["clients","frontend"], sprintId:"spr3", inSprint:true },
+    { id:"iss107", key:"HMS-107", title:"To'lovlar va qarzdorlik ko'rinishi", type:"story", points:2,
+      status:"todo", assignee:"Madina X.", priority:"medium", component:"Frontend",
+      branch:"feature/HMS-107-client-payments", pr:null, labels:["clients","payments"], sprintId:"spr3", inSprint:true },
+    { id:"iss108", key:"HMS-108", title:"Shaxsiy ma'lumotlarni maskalash", type:"task", points:2,
+      status:"review", assignee:"Dilshod I.", priority:"high", component:"Security",
+      branch:"feature/HMS-108-privacy-mask", pr:45, labels:["clients","security"], sprintId:"spr3", inSprint:true },
+    { id:"iss109", key:"HMS-109", title:"Mijozlarni CSV formatida eksport qilish", type:"story", points:3,
+      status:"backlog", assignee:"Shahnoza Q.", priority:"medium", component:"Backend",
+      branch:"feature/HMS-109-clients-export", pr:null, labels:["clients","export"], sprintId:null, inSprint:false },
+    { id:"iss110", key:"HMS-110", title:"Mijozlarni soft delete qilish", type:"task", points:2,
+      status:"backlog", assignee:"Dilshod I.", priority:"low", component:"Backend",
+      branch:"feature/HMS-110-soft-delete", pr:null, labels:["clients","backend"], sprintId:null, inSprint:false },
+    { id:"iss111", key:"HMS-111", title:"Rollar bo'yicha maxfiy maydonlarni cheklash", type:"task", points:3,
+      status:"backlog", assignee:"Dilshod I.", priority:"high", component:"Security",
+      branch:"feature/HMS-111-client-rbac", pr:null, labels:["clients","security"], sprintId:null, inSprint:false },
+    { id:"iss112", key:"HMS-112", title:"Mijozlar moduli uchun avtomatik testlar", type:"task", points:3,
+      status:"backlog", assignee:"Bekzod E.", priority:"medium", component:"QA",
+      branch:"feature/HMS-112-client-tests", pr:null, labels:["clients","tests"], sprintId:null, inSprint:false }
+  ];
+  const prs = [
+    { id:"pr41", number:41, title:"Mijozlar ro'yxati va qidiruv", branch:"feature/HMS-101-clients-list",
+      target:"develop", status:"merged", checks:"4/4", author:"Shahnoza Q.", updated:day(-2) },
+    { id:"pr42", number:42, title:"Mijoz kartasi va tahrirlash", branch:"feature/HMS-102-client-card",
+      target:"develop", status:"merged", checks:"4/4", author:"Bekzod E.", updated:day(-1) },
+    { id:"pr43", number:43, title:"Yangi mijoz formasi", branch:"feature/HMS-103-client-form",
+      target:"develop", status:"merged", checks:"4/4", author:"Bekzod E.", updated:day(-1) },
+    { id:"pr44", number:44, title:"Pasport va ID validatsiyasi", branch:"feature/HMS-104-doc-validation",
+      target:"develop", status:"review", checks:"3/4", author:"Dilshod I.", updated:todayStr() },
+    { id:"pr45", number:45, title:"Maxfiy maydonlarni maskalash", branch:"feature/HMS-108-privacy-mask",
+      target:"develop", status:"review", checks:"2/3", author:"Dilshod I.", updated:todayStr() }
+  ];
+  const project = {
+    name:"HMS loyihasi", start:day(-14), weeks:12,
+    stages:[
+      { id:"st1", name:"Loyiha xartiyasi va reja", start:1, end:2, progress:100, owner:"Dilshod I." },
+      { id:"st2", name:"Arxitektura va autentifikatsiya", start:2, end:4, progress:100, owner:"Dilshod I." },
+      { id:"st3", name:"Xonalar moduli", start:4, end:6, progress:100, owner:"Bekzod E." },
+      { id:"st4", name:"Mijozlar moduli", start:6, end:8, progress:85, owner:"Shahnoza Q." },
+      { id:"st5", name:"Bronlash tizimi", start:8, end:10, progress:45, owner:"Bekzod E." },
+      { id:"st6", name:"Joylashtirish va xizmatlar", start:10, end:11, progress:0, owner:"Shahnoza Q." },
+      { id:"st7", name:"To'lovlar va dashboard", start:11, end:12, progress:0, owner:"Madina X." }
+    ]
+  };
+  const risks = [
+    { id:"risk1", code:"R-01", title:"Mijoz talablari sprint o'rtasida o'zgarishi", category:"Talablar",
+      probability:4, impact:4, mitigation:"Har hafta product owner bilan kelishuv, o'zgarishni faqat keyingi sprintga qabul qilish",
+      owner:"Shahnoza Q.", status:"Ochiq", due:day(7) },
+    { id:"risk2", code:"R-02", title:"Bir xonani ikki marta bron qilish", category:"Texnik",
+      probability:3, impact:5, mitigation:"DB darajasida exclusion constraint, server validatsiyasi va 409 javobi",
+      owner:"Dilshod I.", status:"Ochiq", due:day(5) },
+    { id:"risk3", code:"R-03", title:"Pasport ma'lumotlarining sizib chiqishi", category:"Xavfsizlik",
+      probability:2, impact:5, mitigation:"Maskalash, view_sensitive ruxsati, eksport audit va shifrlash",
+      owner:"Dilshod I.", status:"Kuzatilmoqda", due:day(10) },
+    { id:"risk4", code:"R-04", title:"Sprint hajmining rejadan oshib ketishi", category:"Loyiha",
+      probability:4, impact:3, mitigation:"WIP limit, story ni bo'lish, velocity asosida rejalashtirish",
+      owner:"Shahnoza Q.", status:"Kuzatilmoqda", due:day(3) },
+    { id:"risk5", code:"R-05", title:"CI yoki test muhitining beqarorligi", category:"Infratuzilma",
+      probability:3, impact:3, mitigation:"Docker Compose, test konteynerlari, cache va retry siyosati",
+      owner:"Bekzod E.", status:"Ochiq", due:day(12) },
+    { id:"risk6", code:"R-06", title:"Sana va vaqt zonasi xatosi", category:"Texnik",
+      probability:3, impact:4, mitigation:"UTC saqlash, Asia/Tashkent ga ko'rsatish, chegaraviy testlar",
+      owner:"Dilshod I.", status:"Ochiq", due:day(9) },
+    { id:"risk7", code:"R-07", title:"To'lov integratsiyasining kechikishi", category:"Tashqi",
+      probability:2, impact:4, mitigation:"Payme/Click bilan erta kelishuv, mock provayder va zaxira reja",
+      owner:"Madina X.", status:"Kuzatilmoqda", due:day(20) },
+    { id:"risk8", code:"R-08", title:"Jamoa a'zosining kasalligi yoki ta'tili", category:"Resurs",
+      probability:2, impact:3, mitigation:"Bilim almashish, juftlik dasturlash, vazifalarni qayta taqsimlash",
+      owner:"Shahnoza Q.", status:"Yopilgan", due:day(-1) }
+  ];
+  return { version:DB_VERSION, roomTypes:types, amenities, rooms, clients, bookings, payments, users,
+    sprints, issues, prs, project, risks, activity:[] };
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function roomType(id) { return db.roomTypes.find(t => t.id === id); }
+function client(id) { return db.clients.find(c => c.id === id); }
+function room(id) { return db.rooms.find(r => r.id === id); }
+function booking(id) { return db.bookings.find(b => b.id === id); }
+function clientName(c) { return c ? `${c.firstName} ${c.lastName}` : "Noma'lum mijoz"; }
+function clientInitials(c) { return initials(c ? c.firstName + " " + c.lastName : "?"); }
+function roomLabel(r) { return r ? `${r.roomNumber}-xona` : "—"; }
+function bookingPaid(b) {
+  return db.payments.filter(p => p.bookingId === b.id && p.status === "paid")
+    .reduce((s, p) => s + Number(p.amount), 0);
+}
+function bookingBalance(b) { return Math.max(0, Number(b.total || 0) - bookingPaid(b)); }
+function roomHasActiveBooking(r) {
+  return db.bookings.some(b => b.roomId === r.id && ["pending","confirmed","checked_in"].includes(b.status));
+}
+function roomBusy(roomId, checkIn, checkOut, excludeId) {
+  return db.bookings.some(b =>
+    b.id !== excludeId && b.roomId === roomId &&
+    ["pending","confirmed","checked_in"].includes(b.status) &&
+    b.checkIn < checkOut && checkIn < b.checkOut
+  );
+}
+function nextBookingCode() {
+  const year = new Date().getFullYear();
+  let max = 0;
+  db.bookings.forEach(b => {
+    const m = String(b.code || "").match(/-(\d+)$/);
+    if (m) max = Math.max(max, Number(m[1]));
+  });
+  return `B-${year}-${String(max + 1).padStart(3, "0")}`;
+}
+function can(action) {
+  if (!currentUser) return false;
+  const list = ABILITIES[currentUser.role] || [];
+  return list.includes("*") || list.includes(action);
+}
+function log(action, detail) {
+  if (!db) return;
+  db.activity.unshift({
+    id: uid("act"),
+    at: new Date().toISOString(),
+    user: currentUser ? currentUser.name : "Tizim",
+    action, detail
+  });
+  db.activity = db.activity.slice(0, 80);
+}
+function toast(title, text = "", type = "ok") {
+  const root = $("#toastRoot");
+  const el = document.createElement("div");
+  el.className = "toast " + (type === "error" ? "error" : type === "info" ? "info" : "");
+  el.innerHTML = `<b>${icon(type === "error" ? "alert" : type === "info" ? "clock" : "check", 13)} ${esc(title)}</b><span>${esc(text)}</span>`;
+  root.appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; el.style.transform = "translateY(6px)"; }, 3200);
+  setTimeout(() => el.remove(), 3550);
+}
+function statusChip(map, key) {
+  const s = map[key] || { label:key, cls:"gray" };
+  return `<span class="chip ${s.cls}"><span class="dot"></span>${esc(s.label)}</span>`;
+}
+function roleChip(role) {
+  const cls = role === "admin" ? "purple" : role === "manager" ? "blue" : role === "accountant" ? "yellow" : "green";
+  return `<span class="chip ${cls}">${esc(ROLE_LABEL[role] || role)}</span>`;
+}
+
+/* =========================================================
+   APP BOOT
+   ========================================================= */
+function boot() {
+  db = loadDB();
+  if (!db) { db = seedDB(); saveDB(); }
+  else if (db.version !== DB_VERSION) { db.version = DB_VERSION; saveDB(); }
+  session = loadSession();
+  const u = session ? db.users.find(x => x.id === session.userId && x.active) : null;
+  if (u) {
+    currentUser = u;
+    showApp();
+  } else {
+    showLogin();
+  }
+  const loginForm = $("#loginForm");
+  if (loginForm) loginForm.addEventListener("submit", doLogin);
+  $$(".demo-btn").forEach(btn => btn.addEventListener("click", () => {
+    const map = { admin:"admin@hms.uz", manager:"manager@hms.uz", reception:"reception@hms.uz", accountant:"accountant@hms.uz" };
+    const pass = { admin:"admin123", manager:"manager123", reception:"reception123", accountant:"account123" };
+    $("#loginEmail").value = map[btn.dataset.demo];
+    $("#loginPassword").value = pass[btn.dataset.demo];
+    $("#loginEmail").focus();
+  }));
+  $("#menuBtn").innerHTML = icon("menu", 20);
+  $("#logoutBtn").innerHTML = icon("logout", 18);
+  $("#logoutBtn").title = "Tizimdan chiqish";
+  $("#logoutBtn").addEventListener("click", doLogout);
+  $("#menuBtn").addEventListener("click", toggleSidebar);
+  $("#sidebarBackdrop").addEventListener("click", closeSidebar);
+  document.addEventListener("click", onGlobalClick);
+  document.addEventListener("submit", onGlobalSubmit);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+  window.addEventListener("resize", () => { if (innerWidth > 980) closeSidebar(false); });
+}
+
+function showLogin() {
+  $("#loginScreen").classList.remove("hidden");
+  $("#app").classList.add("hidden");
+  document.title = "HMS — Tizimga kirish";
+}
+function showApp() {
+  $("#loginScreen").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  document.title = "HMS — Mehmonxona boshqaruv tizimi";
+  currentView = "dashboard";
+  render();
+}
+
+function doLogin(e) {
+  e.preventDefault();
+  const email = $("#loginEmail").value.trim().toLowerCase();
+  const password = $("#loginPassword").value;
+  const u = db.users.find(x => x.email.toLowerCase() === email && x.password === password);
+  const err = $("#loginError");
+  if (!u) {
+    err.textContent = "Login yoki parol noto'g'ri. Demo hisoblardan foydalanib ko'ring.";
+    err.classList.add("show");
+    return;
+  }
+  if (!u.active) {
+    err.textContent = "Bu foydalanuvchi bloklangan. Administrator bilan bog'laning.";
+    err.classList.add("show");
+    return;
+  }
+  err.classList.remove("show");
+  currentUser = u;
+  session = { userId:u.id, at:new Date().toISOString() };
+  saveSession(session);
+  log("LOGIN", "Tizimga kirdi");
+  saveDB();
+  showApp();
+  toast("Xush kelibsiz", `${u.name} · ${ROLE_LABEL[u.role]}`);
+}
+function doLogout() {
+  confirmDialog("Tizimdan chiqish", "Hisobingizdan chiqmoqchimisiz? Kiritilgan ma'lumotlar brauzerda saqlanib qoladi.", () => {
+    if (currentUser) { log("LOGOUT", "Tizimdan chiqdi"); saveDB(); }
+    currentUser = null; session = null; saveSession(null);
+    showLogin();
+    $("#loginPassword").value = "";
+    toast("Tizimdan chiqdingiz", "", "info");
+  });
+}
+function toggleSidebar() {
+  $("#sidebar").classList.toggle("open");
+  $("#sidebarBackdrop").classList.toggle("show");
+}
+function closeSidebar(show = true) {
+  $("#sidebar").classList.remove("open");
+  if (show) $("#sidebarBackdrop").classList.remove("show");
+  else $("#sidebarBackdrop").classList.remove("show");
+}
+
+/* =========================================================
+   RENDER SHELL
+   ========================================================= */
+function allowed(viewId) {
+  const item = NAV.find(n => n.id === viewId);
+  return item && currentUser && item.roles.includes(currentUser.role);
+}
+function navigate(viewId) {
+  if (!allowed(viewId)) viewId = "dashboard";
+  currentView = viewId;
+  closeSidebar(false);
+  render();
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+function render() {
+  if (!currentUser) return;
+  renderNav();
+  const item = NAV.find(n => n.id === currentView) || NAV[0];
+  $("#crumb").innerHTML = `Boshqaruv / <b>${esc(item.label)}</b>`;
+  $("#todayLabel").textContent = todayLabel();
+  $("#userName").textContent = currentUser.name;
+  $("#userRole").textContent = ROLE_LABEL[currentUser.role];
+  $("#userAvatar").textContent = initials(currentUser.name);
+  const view = $("#view");
+  const map = {
+    dashboard: renderDashboard,
+    sprint: renderSprint,
+    plan: renderPlan,
+    rooms: renderRooms,
+    "room-types": renderRoomTypes,
+    clients: renderClients,
+    bookings: renderBookings,
+    payments: renderPayments,
+    users: renderUsers,
+    settings: renderSettings
+  };
+  view.innerHTML = (map[currentView] || renderDashboard)();
+  if (currentView === "settings") bindSettings();
+}
+function renderNav() {
+  const nav = $("#nav");
+  nav.innerHTML = NAV.filter(n => n.roles.includes(currentUser.role)).map(n => `
+    <button class="nav-item ${currentView===n.id?"active":""}" data-nav="${n.id}">
+      ${icon(n.icon, 18)}<span>${esc(n.label)}</span>
+    </button>`).join("");
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard() {
+  const total = db.rooms.filter(r => r.isActive !== false).length;
+  const available = db.rooms.filter(r => r.status === "available").length;
+  const occupied = db.rooms.filter(r => r.status === "occupied").length;
+  const reserved = db.rooms.filter(r => r.status === "reserved").length;
+  const cleaning = db.rooms.filter(r => r.status === "cleaning").length;
+  const maintenance = db.rooms.filter(r => r.status === "maintenance").length;
+  const occupancy = total ? Math.round(occupied / total * 100) : 0;
+  const revenue = db.payments.filter(p => p.status === "paid" && p.date.startsWith(monthKey()))
+    .reduce((s, p) => s + Number(p.amount), 0);
+  const arrivals = db.bookings.filter(b => b.status === "confirmed" && b.checkIn === todayStr());
+  const departures = db.bookings.filter(b => b.status === "checked_in" && b.checkOut === todayStr());
+  const recent = [...db.bookings].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 5);
+
+  const bars = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = addDays(-i);
+    const count = db.bookings.filter(b => !["cancelled","no_show"].includes(b.status) && b.checkIn <= d && d < b.checkOut)
+      .map(b => b.roomId).filter((v, idx, arr) => arr.indexOf(v) === idx).length;
+    const pct = total ? Math.round(count / total * 100) : 0;
+    bars.push({ d, pct, label:WEEKDAYS_SHORT[new Date(d + "T00:00:00").getDay()] });
+  }
+
+  const donutColors = [
+    ["var(--green)", available], ["var(--orange)", reserved], ["var(--blue)", occupied],
+    ["var(--yellow)", cleaning], ["var(--red)", maintenance]
+  ];
+  let acc = 0;
+  const stops = donutColors.map(([color, val]) => {
+    const from = acc;
+    acc += total ? val / total * 100 : 0;
+    return `${color} ${from}% ${acc}%`;
+  }).join(",");
+
+  return `
+  <div class="page-head">
+    <div>
+      <h1>Dashboard</h1>
+      <div class="sub">Mehmonxonaning bugungi holati va asosiy ko'rsatkichlari</div>
+    </div>
+    <div class="head-actions">
+      ${can("room.create") ? `<button class="btn btn-secondary" data-action="room-add">${icon("plus",16)} Xona qo'shish</button>` : ""}
+      ${can("booking.create") ? `<button class="btn btn-primary" data-action="booking-add">${icon("calendar",16)} Yangi bron</button>` : ""}
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat green"><div class="sicon">${icon("bed",18)}</div><div class="label">Jami xonalar</div><div class="value">${total}</div><div class="hint">${available} ta bo'sh va tayyor</div></div>
+    <div class="stat"><div class="sicon">${icon("check",18)}</div><div class="label">Bo'sh xonalar</div><div class="value">${available}</div><div class="hint">Joylashtirish mumkin</div></div>
+    <div class="stat orange"><div class="sicon">${icon("user",18)}</div><div class="label">Bandlik</div><div class="value">${occupancy}%</div><div class="hint">${occupied} ta xonada mehmon bor</div></div>
+    <div class="stat purple"><div class="sicon">${icon("money",18)}</div><div class="label">Oylik tushum</div><div class="value" style="font-size:20px">${money(revenue)}</div><div class="hint">${MONTHS[new Date().getMonth()]} oyi</div></div>
+    <div class="stat red"><div class="sicon">${icon("clock",18)}</div><div class="label">Bugungi kelish</div><div class="value">${arrivals.length}</div><div class="hint">${departures.length} ta jo'nab ketish</div></div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="panel">
+      <div class="panel-head"><h2>Haftalik bandlik</h2><span class="hint">So'nggi 7 kun, foizda</span></div>
+      <div class="chart">
+        ${bars.map(b => `<div class="bar-wrap"><div class="bar" style="height:${Math.max(2,b.pct)}%"><span>${b.pct}%</span></div><div class="bar-label">${b.label}</div></div>`).join("")}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Xonalar holati</h2><span class="hint">${total} xona</span></div>
+      <div class="donut-wrap">
+        <div class="donut" style="background:conic-gradient(${stops})"><div class="donut-hole"><b>${occupancy}%</b><span>bandlik</span></div></div>
+        <div class="legend">
+          <div><i style="background:var(--green)"></i>Bo'sh <b>${available}</b></div>
+          <div><i style="background:var(--orange)"></i>Band <b>${reserved}</b></div>
+          <div><i style="background:var(--blue)"></i>Yashamoqda <b>${occupied}</b></div>
+          <div><i style="background:var(--yellow)"></i>Tozalanmoqda <b>${cleaning}</b></div>
+          <div><i style="background:var(--red)"></i>Ta'mirda <b>${maintenance}</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid two">
+    <div class="panel">
+      <div class="panel-head"><h2>Bugungi kelishlar</h2><span class="hint">${fmtDate(todayStr())}</span></div>
+      ${arrivals.length ? `<div class="list">${arrivals.map(b => {
+        const c = client(b.clientId), r = room(b.roomId);
+        return `<div class="list-row"><div class="list-ava">${esc(clientInitials(c))}</div><div class="list-main"><b>${esc(clientName(c))}</b><span>${esc(roomLabel(r))} · ${b.guests} mehmon · ${fmtDate(b.checkIn)}</span></div><button class="link-btn" data-action="booking-open" data-id="${b.id}">Ko'rish</button></div>`;
+      }).join("")}</div>` : `<div class="empty"><b>Kelishlar yo'q</b>Bugun uchun rejalashtirilgan bron mavjud emas.</div>`}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Bugungi jo'nab ketishlar</h2><span class="hint">${fmtDate(todayStr())}</span></div>
+      ${departures.length ? `<div class="list">${departures.map(b => {
+        const c = client(b.clientId), r = room(b.roomId);
+        return `<div class="list-row"><div class="list-ava">${esc(clientInitials(c))}</div><div class="list-main"><b>${esc(clientName(c))}</b><span>${esc(roomLabel(r))} · ${fmtDate(b.checkOut)} gacha</span></div><button class="link-btn" data-action="booking-checkout" data-id="${b.id}">Check-out</button></div>`;
+      }).join("")}</div>` : `<div class="empty"><b>Jo'nab ketishlar yo'q</b>Bugun check-out kutilayotgan mehmon yo'q.</div>`}
+    </div>
+  </div>
+
+  <div class="dash-grid" style="margin-top:14px">
+    <div class="panel">
+      <div class="panel-head"><h2>So'nggi bronlar</h2><button class="link-btn" data-nav="bookings">Barchasi →</button></div>
+      <div class="table-wrap" style="border:0">
+        <table class="data" style="min-width:620px">
+          <thead><tr><th>Kod</th><th>Mijoz</th><th>Xona</th><th>Sanalar</th><th>Summa</th><th>Holat</th></tr></thead>
+          <tbody>${recent.map(b => {
+            const c = client(b.clientId), r = room(b.roomId);
+            return `<tr><td class="cell-main">${esc(b.code)}</td><td>${esc(clientName(c))}</td><td>${esc(r ? r.roomNumber : "—")}</td><td class="nowrap">${fmtDateShort(b.checkIn)} – ${fmtDateShort(b.checkOut)}</td><td class="money">${money(b.total)}</td><td>${statusChip(BOOKING_STATUS,b.status)}</td></tr>`;
+          }).join("")}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Tezkor amallar</h2></div>
+      <div class="quick">
+        ${can("sprint.manage") ? `<button data-nav="sprint"><span class="qico">${icon("cards",16)}</span><span><b>Sprint doskasi</b><br><span class="muted small">Backlog va PR holati</span></span></button>` : ""}
+        ${can("plan.manage") ? `<button data-nav="plan"><span class="qico">${icon("calendar",16)}</span><span><b>Reja va risklar</b><br><span class="muted small">Gantt va risk registri</span></span></button>` : ""}
+        ${can("booking.create") ? `<button data-action="booking-add"><span class="qico">${icon("calendar",16)}</span><span><b>Yangi bron</b><br><span class="muted small">Mijoz va xonani tanlash</span></span></button>` : ""}
+        ${can("room.status") ? `<button data-nav="rooms"><span class="qico">${icon("bed",16)}</span><span><b>Xona holati</b><br><span class="muted small">Bo'sh / band / ta'mir</span></span></button>` : ""}
+        ${can("client.create") ? `<button data-action="client-add"><span class="qico">${icon("users",16)}</span><span><b>Mijoz qo'shish</b><br><span class="muted small">Yangi mijoz kartasi</span></span></button>` : ""}
+        ${can("payment.create") ? `<button data-action="payment-add"><span class="qico">${icon("card",16)}</span><span><b>To'lov qayd etish</b><br><span class="muted small">Naqd yoki karta</span></span></button>` : ""}
+      </div>
+      <div class="divider"></div>
+      <div class="small muted">Bugungi sana: <b style="color:var(--text)">${todayLabel()}</b></div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   SPRINT / JIRA BOARD
+   ========================================================= */
+function activeSprint() {
+  return (db.sprints || []).find(s => s.status === "active") || (db.sprints || [])[0] || null;
+}
+function sprintIssues() { return (db.issues || []).filter(i => i.inSprint); }
+function issuePoints(arr) { return arr.reduce((s, i) => s + Number(i.points || 0), 0); }
+function nextIssueKey() {
+  let max = 100;
+  (db.issues || []).forEach(i => {
+    const m = String(i.key || "").match(/(\d+)$/);
+    if (m) max = Math.max(max, Number(m[1]));
+  });
+  return "HMS-" + (max + 1);
+}
+function issueCard(i) {
+  const t = ISSUE_TYPE[i.type] || ISSUE_TYPE.story;
+  const idx = ISSUE_ORDER.indexOf(i.status);
+  return `<article class="issue-card" data-action="issue-open" data-id="${i.id}">
+    <div class="issue-top"><span class="issue-key">${esc(i.key)}</span><span class="chip ${t.cls}">${t.label}</span></div>
+    <div class="issue-title">${esc(i.title)}</div>
+    <div class="issue-meta"><span class="sp">${i.points} SP</span><span>${esc(i.assignee || "—")}</span><span class="prio ${i.priority || "medium"}">${esc(i.priority || "medium")}</span></div>
+    ${i.branch ? `<div class="branch" title="${esc(i.branch)}">${esc(i.branch)}</div>` : ""}
+    <div class="issue-actions">
+      <button type="button" data-action="issue-move-left" data-id="${i.id}" ${idx<=0?"disabled":""} title="Chapga">←</button>
+      <button type="button" data-action="issue-move-right" data-id="${i.id}" ${idx>=ISSUE_ORDER.length-1?"disabled":""} title="O'ngga">→</button>
+    </div>
+  </article>`;
+}
+function renderSprint() {
+  const s = activeSprint();
+  if (!s) return `<div class="panel"><div class="empty"><b>Sprint topilmadi</b>Yangi sprint yaratish uchun sozlamalarni tekshiring.</div></div>`;
+  const all = db.issues || [];
+  const inSprint = all.filter(i => i.inSprint);
+  const total = issuePoints(inSprint);
+  const done = issuePoints(inSprint.filter(i => i.status === "done"));
+  const progress = total ? Math.round(done / total * 100) : 0;
+  const daysLeft = Math.max(0, nights(todayStr(), s.end));
+  const prs = db.prs || [];
+  return `
+  <div class="sprint-hero">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative">
+      <div><h1>${esc(s.name)} · Mijozlar moduli</h1><div class="goal">${esc(s.goal)}</div></div>
+      ${can("sprint.manage") ? `<button class="btn" style="background:#fff;color:var(--navy)" data-action="issue-add">${icon("plus",15)} Yangi issue</button>` : ""}
+    </div>
+    <div class="sprint-meta">
+      <span>${icon("calendar",14)} ${fmtDate(s.start)} – ${fmtDate(s.end)}</span>
+      <span>${icon("clock",14)} <b>${daysLeft}</b> kun qoldi</span>
+      <span>${icon("cards",14)} <b>${inSprint.length}</b> issue</span>
+      <span>${icon("check",14)} <b>${done}/${total}</b> story point</span>
+    </div>
+    <div class="sprint-progress"><i style="width:${progress}%"></i></div>
+  </div>
+
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="label">Sprint hajmi</div><div class="value">${total}</div><div class="hint">story point</div></div>
+    <div class="stat green"><div class="label">Bajarildi</div><div class="value">${done}</div><div class="hint">${progress}% progress</div></div>
+    <div class="stat orange"><div class="label">Jarayonda</div><div class="value">${inSprint.filter(i => ["progress","review"].includes(i.status)).length}</div><div class="hint">progress + review</div></div>
+    <div class="stat purple"><div class="label">Backlog</div><div class="value">${all.filter(i => i.status === "backlog").length}</div><div class="hint">keyingi sprint uchun</div></div>
+  </div>
+
+  <div class="board">
+    ${ISSUE_ORDER.map(st => {
+      const items = all.filter(i => i.status === st);
+      const pts = issuePoints(items);
+      return `<section class="board-col">
+        <h3>${ISSUE_STATUS[st].label}<span>${items.length} · ${pts} SP</span></h3>
+        ${items.length ? items.map(issueCard).join("") : `<div class="small muted" style="padding:10px 2px">Bo'sh</div>`}
+      </section>`;
+    }).join("")}
+  </div>
+
+  <div class="dash-grid two" style="margin-top:14px">
+    <div class="panel">
+      <div class="panel-head"><h2>Pull Request lar</h2><span class="hint">develop → merge</span></div>
+      ${prs.map(p => `<div class="pr-row"><div class="pr-num">#${p.number}</div><div class="pr-main"><b>${esc(p.title)}</b><span>${esc(p.branch)} → ${esc(p.target)} · ${esc(p.author)}</span></div><div class="pr-state ${p.status}">${p.status === "merged" ? "Merged" : p.status === "review" ? "Review" : "Draft"}</div></div>`).join("")}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Git qoidalari</h2><span class="hint">branch + PR</span></div>
+      <div class="git-note">
+        <p style="margin:0 0 7px">Branch nomi issue kaliti bilan boshlanadi: <code>feature/HMS-101-clients-list</code></p>
+        <p style="margin:0 0 7px">Commit formati: <code>feat(clients): mijozlar ro'yxati</code></p>
+        <p style="margin:0 0 7px">PR faqat <code>develop</code> ga ochiladi, kamida 1 review va CI 4/4 bo'lishi shart.</p>
+        <p style="margin:0">Merge: <b>Squash and merge</b>; release va hotfix uchun alohida branch.</p>
+      </div>
+    </div>
+  </div>`;
+}
+function moveIssue(id, dir) {
+  const i = (db.issues || []).find(x => x.id === id); if (!i) return;
+  const idx = ISSUE_ORDER.indexOf(i.status);
+  const next = ISSUE_ORDER[idx + dir];
+  if (!next) return;
+  i.status = next;
+  const s = activeSprint();
+  if (next === "backlog") { i.inSprint = false; i.sprintId = null; }
+  else { i.inSprint = true; i.sprintId = s ? s.id : null; }
+  log("ISSUE_MOVED", `${i.key}: ${ISSUE_STATUS[next].label}`);
+  saveDB(); render();
+  toast("Issue yangilandi", `${i.key} → ${ISSUE_STATUS[next].label}`);
+}
+function openIssueModal(id) {
+  if (!can("sprint.manage")) return;
+  const i = id ? (db.issues || []).find(x => x.id === id) : null;
+  const assignees = ["Shahnoza Q.","Bekzod E.","Dilshod I.","Madina X."];
+  const components = ["Frontend","Backend","Security","QA"];
+  openModal(`
+    ${modalHead(i ? i.key + " ni tahrirlash" : "Yangi issue", "Jira kartochkasi: story, task yoki bug")}
+    <form data-form="issue" data-id="${i ? i.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>Sarlavha <span class="req">*</span></label><input class="input" name="title" value="${i?esc(i.title):""}" placeholder="Mijozlar bo'yicha..." required></div>
+          <div class="field"><label>Turi</label><select class="input" name="type">${Object.entries(ISSUE_TYPE).map(([k,v]) => `<option value="${k}" ${i && i.type===k?"selected":""}>${v.label}</option>`).join("")}</select></div>
+          <div class="field"><label>Story point</label><select class="input" name="points">${[1,2,3,5,8,13].map(p => `<option value="${p}" ${i && i.points===p?"selected":""}>${p}</option>`).join("")}</select></div>
+          <div class="field"><label>Holat</label><select class="input" name="status">${ISSUE_ORDER.map(st => `<option value="${st}" ${i && i.status===st?"selected":""}>${ISSUE_STATUS[st].label}</option>`).join("")}</select></div>
+          <div class="field"><label>Mas'ul</label><select class="input" name="assignee">${assignees.map(a => `<option ${i && i.assignee===a?"selected":""}>${a}</option>`).join("")}</select></div>
+          <div class="field"><label>Prioritet</label><select class="input" name="priority">${["high","medium","low"].map(p => `<option value="${p}" ${i && i.priority===p?"selected":""}>${p}</option>`).join("")}</select></div>
+          <div class="field"><label>Komponent</label><select class="input" name="component">${components.map(c => `<option ${i && i.component===c?"selected":""}>${c}</option>`).join("")}</select></div>
+          <div class="field full"><label>Branch</label><input class="input" name="branch" value="${i?esc(i.branch||""):""}" placeholder="feature/HMS-113-..."></div>
+          <div class="field full"><label>Label lar</label><input class="input" name="labels" value="${i?esc((i.labels||[]).join(", ")):""}" placeholder="clients, backend"></div>
+          <div class="field full"><label class="chk" style="width:fit-content"><input type="checkbox" name="inSprint" ${!i || i.inSprint?"checked":""}> Sprintga kiritilgan</label></div>
+        </div>
+      </div>
+      ${modalFoot(i ? "Saqlash" : "Issue yaratish")}
+    </form>`, "wide");
+}
+function saveIssue(form) {
+  const f = new FormData(form); const id = form.dataset.id;
+  const title = String(f.get("title") || "").trim();
+  const points = Number(f.get("points"));
+  const inSprint = f.get("inSprint") === "on";
+  let status = f.get("status");
+  if (!inSprint) status = "backlog";
+  if (!title) return toast("Xato", "Sarlavhani kiriting.", "error");
+  if (![1,2,3,5,8,13].includes(points)) return toast("Xato", "Story point noto'g'ri.", "error");
+  const data = {
+    title, type:f.get("type"), points, status, inSprint,
+    assignee:f.get("assignee"), priority:f.get("priority"), component:f.get("component"),
+    branch:String(f.get("branch") || "").trim(),
+    labels:String(f.get("labels") || "").split(",").map(x => x.trim()).filter(Boolean)
+  };
+  const s = activeSprint();
+  if (id) {
+    const i = db.issues.find(x => x.id === id);
+    Object.assign(i, data);
+    i.sprintId = inSprint && s ? s.id : null;
+    log("ISSUE_UPDATED", `${i.key} tahrirlandi`);
+    toast("Saqlandi", `${i.key} yangilandi.`);
+  } else {
+    const key = nextIssueKey();
+    db.issues.push({ id:uid("iss"), key, ...data, pr:null, sprintId:inSprint && s ? s.id : null });
+    log("ISSUE_CREATED", `${key} yaratildi`);
+    toast("Issue yaratildi", key);
+  }
+  saveDB(); closeModal(); render();
+}
+
+/* =========================================================
+   PLAN / GANTT / RISKS
+   ========================================================= */
+function riskLevel(score) { return score >= 15 ? "high" : score >= 8 ? "medium" : "low"; }
+function riskLabel(score) { return score >= 15 ? "Yuqori" : score >= 8 ? "O'rtacha" : "Past"; }
+function renderPlan() {
+  const p = db.project || { stages:[], weeks:12 };
+  const risks = db.risks || [];
+  const avg = p.stages.length ? Math.round(p.stages.reduce((s,x)=>s+x.progress,0)/p.stages.length) : 0;
+  const high = risks.filter(r => r.probability*r.impact >= 15).length;
+  const open = risks.filter(r => r.status !== "Yopilgan").length;
+  return `
+  <div class="page-head">
+    <div><h1>Reja va risklar</h1><div class="sub">Loyiha Gantt diagrammasi va risk registri</div></div>
+    <div class="head-actions">
+      ${can("plan.manage") ? `<button class="btn btn-primary" data-action="risk-add">${icon("plus",16)} Yangi risk</button>` : ""}
+    </div>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat"><div class="label">Loyiha davomiyligi</div><div class="value">${p.weeks}</div><div class="hint">hafta</div></div>
+    <div class="stat green"><div class="label">O'rtacha bajarilish</div><div class="value">${avg}%</div><div class="hint">${p.stages.filter(s=>s.progress===100).length} bosqich yakunlangan</div></div>
+    <div class="stat orange"><div class="label">Yuqori risklar</div><div class="value">${high}</div><div class="hint">ball ≥ 15</div></div>
+    <div class="stat red"><div class="label">Ochiq risklar</div><div class="value">${open}</div><div class="hint">kuzatuv talab qiladi</div></div>
+  </div>
+  <div class="gantt">
+    <div class="panel-head" style="margin-bottom:10px"><h2>Loyiha Gantt diagrammasi</h2><span class="hint">1 hafta = 1 ustun · jami ${p.weeks} hafta</span></div>
+    <div class="gantt-head"><span>Bosqich</span>${Array.from({length:p.weeks},(_,i)=>`<span>W${i+1}</span>`).join("")}</div>
+    ${p.stages.map(st => {
+      const cls = st.progress===100 ? "done" : st.progress>0 ? "active" : "";
+      return `<div class="gantt-row"><div class="gantt-label"><b>${esc(st.name)}</b><span>${esc(st.owner)} · ${st.progress}%</span></div>
+        <div class="gantt-track"><div class="gantt-bar ${cls}" style="grid-column:${st.start} / ${st.end}"><i style="width:${st.progress}%"></i><span>${st.progress>20?st.progress+"%":""}</span></div></div></div>`;
+    }).join("")}
+    <div class="gantt-legend" style="display:flex;gap:14px;font-size:10px;color:#7F8C9F;margin-top:10px;flex-wrap:wrap">
+      <span><i style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:2px;margin-right:4px"></i>Yakunlangan</span>
+      <span><i style="display:inline-block;width:10px;height:10px;background:var(--orange);border-radius:2px;margin-right:4px"></i>Jarayonda</span>
+      <span><i style="display:inline-block;width:10px;height:10px;background:#B4C7E7;border-radius:2px;margin-right:4px"></i>Rejalashtirilgan</span>
+      <span><i style="display:inline-block;width:2px;height:10px;background:var(--red);margin-right:4px"></i>Joriy hafta</span>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h2>Risk registri</h2><span class="hint">${risks.length} ta risk · ehtimol × ta'sir</span></div>
+    <div class="table-wrap" style="border:0">
+      <table class="data" style="min-width:980px">
+        <thead><tr><th>Kod</th><th>Risk</th><th>Ehtimol</th><th>Ta'sir</th><th>Ball</th><th>Daraja</th><th>Mas'ul</th><th>Holat</th><th>Amal</th></tr></thead>
+        <tbody>${risks.map(r => {
+          const score = r.probability * r.impact, lvl = riskLevel(score);
+          return `<tr><td class="cell-main">${esc(r.code)}</td>
+            <td><div class="cell-main" style="font-size:12px">${esc(r.title)}</div><div class="cell-sub">${esc(r.category)} · ${esc(r.mitigation)}</div></td>
+            <td>${r.probability}/5</td><td>${r.impact}/5</td>
+            <td><span class="risk-score ${lvl}">${score}</span></td>
+            <td><span class="chip ${lvl==="high"?"red":lvl==="medium"?"orange":"green"}">${riskLabel(score)}</span></td>
+            <td>${esc(r.owner)}</td><td><span class="chip ${r.status==="Yopilgan"?"gray":r.status==="Kuzatilmoqda"?"blue":"yellow"}">${esc(r.status)}</span></td>
+            <td><div class="actions">${can("plan.manage") ? `<button class="icon-btn" title="Tahrirlash" data-action="risk-edit" data-id="${r.id}">${icon("edit",15)}</button>` : ""}</div></td></tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function openRiskModal(id) {
+  const r = id ? (db.risks || []).find(x => x.id === id) : null;
+  openModal(`
+    ${modalHead(r ? "Riskni tahrirlash" : "Yangi risk", "Ehtimol va ta'sir 1–5 ball")}
+    <form data-form="risk" data-id="${r ? r.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>Risk sarlavhasi <span class="req">*</span></label><input class="input" name="title" value="${r?esc(r.title):""}" required></div>
+          <div class="field"><label>Kategoriya</label><input class="input" name="category" value="${r?esc(r.category):"Loyiha"}"></div>
+          <div class="field"><label>Mas'ul</label><input class="input" name="owner" value="${r?esc(r.owner):currentUser.name}"></div>
+          <div class="field"><label>Ehtimol (1–5)</label><input class="input" name="probability" type="number" min="1" max="5" value="${r?r.probability:3}" required></div>
+          <div class="field"><label>Ta'sir (1–5)</label><input class="input" name="impact" type="number" min="1" max="5" value="${r?r.impact:3}" required></div>
+          <div class="field"><label>Holat</label><select class="input" name="status">${["Ochiq","Kuzatilmoqda","Yopilgan"].map(x=>`<option ${r&&r.status===x?"selected":""}>${x}</option>`).join("")}</select></div>
+          <div class="field"><label>Muddat</label><input class="input" name="due" type="date" value="${r?r.due:addDays(7)}"></div>
+          <div class="field full"><label>Kamaytirish chorasi</label><textarea class="input" name="mitigation">${r?esc(r.mitigation):""}</textarea></div>
+        </div>
+      </div>
+      ${modalFoot(r ? "Saqlash" : "Risk qo'shish")}
+    </form>`, "wide");
+}
+function saveRisk(form) {
+  const f = new FormData(form), id = form.dataset.id;
+  const title = String(f.get("title") || "").trim();
+  const probability = Number(f.get("probability")), impact = Number(f.get("impact"));
+  if (!title) return toast("Xato", "Risk sarlavhasini kiriting.", "error");
+  if (probability < 1 || probability > 5 || impact < 1 || impact > 5) return toast("Xato", "Ballar 1–5 oralig'ida bo'lsin.", "error");
+  const data = { title, category:String(f.get("category")||"").trim(), owner:String(f.get("owner")||"").trim(),
+    probability, impact, mitigation:String(f.get("mitigation")||"").trim(), status:f.get("status"),
+    due:String(f.get("due")||"") };
+  if (id) {
+    const r = db.risks.find(x => x.id === id); Object.assign(r, data);
+    log("RISK_UPDATED", `${r.code} tahrirlandi`); toast("Saqlandi", "Risk yangilandi.");
+  } else {
+    let max = 0;
+    (db.risks||[]).forEach(r => { const m = String(r.code).match(/(\d+)/); if (m) max = Math.max(max, +m[1]); });
+    db.risks.push({ id:uid("risk"), code:"R-" + String(max+1).padStart(2,"0"), ...data });
+    log("RISK_CREATED", title); toast("Qo'shildi", "Yangi risk registrga kiritildi.");
+  }
+  saveDB(); closeModal(); render();
+}
+
+/* =========================================================
+   ROOMS
+   ========================================================= */
+function roomFiltered() {
+  let arr = [...db.rooms];
+  if (filters.q) {
+    const q = filters.q.toLowerCase();
+    arr = arr.filter(r => {
+      const t = roomType(r.roomTypeId);
+      return r.roomNumber.toLowerCase().includes(q) || (t && t.name.toLowerCase().includes(q)) ||
+        (r.description || "").toLowerCase().includes(q);
+    });
+  }
+  if (filters.type) arr = arr.filter(r => r.roomTypeId === filters.type);
+  if (filters.status) arr = arr.filter(r => r.status === filters.status);
+  if (filters.floor) arr = arr.filter(r => String(r.floor) === String(filters.floor));
+  const sort = filters.sort;
+  arr.sort((a, b) => sort === "price" ? a.pricePerNight - b.pricePerNight
+    : sort === "floor" ? a.floor - b.floor : String(a.roomNumber).localeCompare(String(b.roomNumber), undefined, {numeric:true}));
+  return arr;
+}
+function renderRooms() {
+  const arr = roomFiltered();
+  const types = db.roomTypes;
+  return `
+  <div class="page-head">
+    <div><h1>Xonalar</h1><div class="sub">Mehmonxona xonalari, turlari va joriy holati</div></div>
+    <div class="head-actions">
+      <div class="view-toggle">
+        <button class="${roomView==="table"?"on":""}" data-action="room-view" data-mode="table" title="Jadval">${icon("table",17)}</button>
+        <button class="${roomView==="cards"?"on":""}" data-action="room-view" data-mode="cards" title="Kartochka">${icon("cards",17)}</button>
+      </div>
+      ${can("room.create") ? `<button class="btn btn-primary" data-action="room-add">${icon("plus",16)} Yangi xona</button>` : ""}
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search">${icon("search",17)}<input class="input" id="roomSearch" placeholder="Xona raqami yoki turi bo'yicha qidirish..." value="${esc(filters.q)}" oninput="setRoomFilter('q',this.value)"></div>
+    <select class="input" onchange="setRoomFilter('type',this.value)">
+      <option value="">Barcha turlar</option>
+      ${types.map(t => `<option value="${t.id}" ${filters.type===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}
+    </select>
+    <select class="input" onchange="setRoomFilter('status',this.value)">
+      <option value="">Barcha holatlar</option>
+      ${Object.entries(ROOM_STATUS).map(([k,v]) => `<option value="${k}" ${filters.status===k?"selected":""}>${v.label}</option>`).join("")}
+    </select>
+    <select class="input" onchange="setRoomFilter('floor',this.value)">
+      <option value="">Barcha qavatlar</option>
+      ${[1,2,3,4,5].map(f => `<option value="${f}" ${String(filters.floor)===String(f)?"selected":""}>${f}-qavat</option>`).join("")}
+    </select>
+    <select class="input" onchange="setRoomFilter('sort',this.value)">
+      <option value="number" ${filters.sort==="number"?"selected":""}>Raqam bo'yicha</option>
+      <option value="price" ${filters.sort==="price"?"selected":""}>Narx bo'yicha</option>
+      <option value="floor" ${filters.sort==="floor"?"selected":""}>Qavat bo'yicha</option>
+    </select>
+    <button class="btn btn-ghost" onclick="resetRoomFilters()">${icon("refresh",15)} Tozalash</button>
+  </div>
+  <div class="page-head" style="margin:-4px 0 10px;align-items:center">
+    <div class="small muted">${arr.length} ta xona ko'rsatilmoqda</div>
+  </div>
+  ${arr.length ? (roomView === "table" ? roomTable(arr) : roomCards(arr)) : `<div class="panel"><div class="empty"><b>Xona topilmadi</b>Filtrlarni o'zgartirib qayta urinib ko'ring.</div></div>`}`;
+}
+function roomTable(arr) {
+  return `<div class="table-wrap"><table class="data">
+    <thead><tr><th>Xona</th><th>Turi</th><th>Qavat</th><th>Sig'im</th><th>Bir kecha narxi</th><th>Holat</th><th>Amallar</th></tr></thead>
+    <tbody>${arr.map(r => {
+      const t = roomType(r.roomTypeId);
+      return `<tr>
+        <td><button class="link-btn" style="font-size:13px" data-action="room-open" data-id="${r.id}"><span class="cell-main">${esc(r.roomNumber)}</span></button><div class="cell-sub">${esc(r.description || "")}</div></td>
+        <td>${esc(t ? t.name : "—")}<div class="cell-sub">${esc(t ? t.code : "")}</div></td>
+        <td>${r.floor}</td><td>${r.maxOccupancy} kishi</td><td class="money">${money(r.pricePerNight)}</td>
+        <td>${statusChip(ROOM_STATUS,r.status)}</td>
+        <td><div class="actions">
+          <button class="icon-btn" title="Ko'rish" data-action="room-open" data-id="${r.id}">${icon("eye",16)}</button>
+          ${can("room.status") ? `<button class="icon-btn" title="Holat" data-action="room-status" data-id="${r.id}">${icon("refresh",16)}</button>` : ""}
+          ${can("room.edit") ? `<button class="icon-btn" title="Tahrirlash" data-action="room-edit" data-id="${r.id}">${icon("edit",16)}</button>` : ""}
+          ${can("room.delete") ? `<button class="icon-btn" title="O'chirish" data-action="room-delete" data-id="${r.id}">${icon("trash",16)}</button>` : ""}
+        </div></td></tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+function roomCards(arr) {
+  return `<div class="room-grid">${arr.map(r => {
+    const t = roomType(r.roomTypeId);
+    const cls = t ? (t.code === "STD" ? "" : t.code === "DBL" ? "t2" : t.code === "JSU" ? "t3" : "t4") : "";
+    return `<article class="room-card">
+      <div class="room-thumb ${cls}">
+        <div class="st">${statusChip(ROOM_STATUS,r.status)}</div>
+        <div class="num">${esc(r.roomNumber)}</div>
+        <div class="type">${esc(t ? t.name : "—")} · ${r.floor}-qavat</div>
+      </div>
+      <div class="room-body">
+        <div class="room-price">${money(r.pricePerNight)} <span>/ kecha</span></div>
+        <div class="room-meta"><span>${icon("user",13)} ${r.maxOccupancy} kishi</span><span>${icon("bed",13)} ${r.amenities ? r.amenities.length : 0} qulaylik</span></div>
+        <div class="room-amen">${(r.amenities || []).slice(0,3).map(id => { const a = db.amenities.find(x => x.id === id); return a ? `<span class="amen">${esc(a.name)}</span>` : ""; }).join("")}${(r.amenities || []).length > 3 ? `<span class="amen">+${r.amenities.length - 3}</span>` : ""}</div>
+        <div class="room-actions">
+          <button class="btn btn-secondary btn-sm" data-action="room-open" data-id="${r.id}">${icon("eye",14)} Ko'rish</button>
+          ${can("room.status") ? `<button class="btn btn-ghost btn-sm" data-action="room-status" data-id="${r.id}">${icon("refresh",14)} Holat</button>` : ""}
+          ${can("room.edit") ? `<button class="btn btn-ghost btn-sm" data-action="room-edit" data-id="${r.id}">${icon("edit",14)}</button>` : ""}
+        </div>
+      </div>
+    </article>`;
+  }).join("")}</div>`;
+}
+function setRoomFilter(k, v) {
+  filters[k] = v;
+  render();
+  if (k === "q") {
+    const el = $("#roomSearch");
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }
+}
+function resetRoomFilters() {
+  filters = { q:"", type:"", status:"", floor:"", sort:"number" };
+  render();
+}
+
+/* =========================================================
+   ROOM TYPES
+   ========================================================= */
+function renderRoomTypes() {
+  return `
+  <div class="page-head">
+    <div><h1>Xona turlari</h1><div class="sub">Narx, sig'im va tavsiflar katalogi</div></div>
+    ${can("type.manage") ? `<button class="btn btn-primary" data-action="type-add">${icon("plus",16)} Yangi tur</button>` : ""}
+  </div>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Kod</th><th>Nomi</th><th>Sig'im</th><th>Bazaviy narx</th><th>Xonalar</th><th>Tavsif</th><th>Amallar</th></tr></thead>
+    <tbody>${db.roomTypes.map(t => {
+      const count = db.rooms.filter(r => r.roomTypeId === t.id).length;
+      return `<tr>
+        <td><span class="chip blue">${esc(t.code)}</span></td>
+        <td class="cell-main">${esc(t.name)}</td>
+        <td>${t.capacity} kishi</td>
+        <td class="money">${money(t.basePrice)}</td>
+        <td>${count} ta</td>
+        <td class="muted" style="max-width:310px">${esc(t.description || "—")}</td>
+        <td><div class="actions">
+          ${can("type.manage") ? `<button class="icon-btn" title="Tahrirlash" data-action="type-edit" data-id="${t.id}">${icon("edit",16)}</button>` : ""}
+          ${can("type.manage") ? `<button class="icon-btn" title="O'chirish" data-action="type-delete" data-id="${t.id}">${icon("trash",16)}</button>` : ""}
+        </div></td></tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+
+/* =========================================================
+   CLIENTS
+   ========================================================= */
+function docTypeLabel(t) { return t === "id_card" ? "ID-karta" : "Pasport"; }
+function maskDoc(c) {
+  const v = String(c.docNumber || "");
+  if (!v) return "—";
+  if (can("client.sensitive")) return v;
+  if (v.length <= 5) return "•••••";
+  return v.slice(0, 2) + "•••" + v.slice(-3);
+}
+function clientFiltered() {
+  let arr = [...db.clients];
+  if (clientFilter === "regular") arr = arr.filter(c => c.isRegular);
+  if (!clientQuery) return arr;
+  const q = clientQuery.toLowerCase();
+  return arr.filter(c =>
+    `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+    c.phone.toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) ||
+    (c.docNumber || "").toLowerCase().includes(q) || (c.country || "").toLowerCase().includes(q)
+  );
+}
+function renderClients() {
+  const arr = clientFiltered();
+  return `
+  <div class="page-head">
+    <div><h1>Mijozlar</h1><div class="sub">Mijoz kartalari, shaxsiy ma'lumotlar va tashriflar tarixi</div></div>
+    <div class="head-actions">
+      ${can("client.export") ? `<button class="btn btn-secondary" data-action="client-export">${icon("download",16)} Excel (CSV)</button>` : ""}
+      ${can("client.create") ? `<button class="btn btn-primary" data-action="client-add">${icon("plus",16)} Yangi mijoz</button>` : ""}
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search">${icon("search",17)}<input class="input" id="clientSearch" placeholder="Ism, telefon, hujjat yoki davlat..." value="${esc(clientQuery)}" oninput="setClientQuery(this.value)"></div>
+    <select class="input" onchange="setClientFilter(this.value)">
+      <option value="all" ${clientFilter==="all"?"selected":""}>Barcha mijozlar</option>
+      <option value="regular" ${clientFilter==="regular"?"selected":""}>Doimiy mijozlar</option>
+    </select>
+    <div class="small muted">${arr.length} ta mijoz</div>
+  </div>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Mijoz</th><th>Telefon</th><th>Hujjat</th><th>Fuqarolik</th><th>Bronlar</th><th>Holat</th><th>Amallar</th></tr></thead>
+    <tbody>${arr.map(c => {
+      const count = db.bookings.filter(b => b.clientId === c.id).length;
+      return `<tr>
+        <td><div class="cell-main">${esc(clientName(c))}</div><div class="cell-sub">${esc(c.email || c.notes || "")}</div></td>
+        <td class="nowrap">${esc(c.phone)}</td>
+        <td><div class="cell-main" style="font-size:12px">${esc(docTypeLabel(c.docType))}</div><div class="cell-sub">${esc(maskDoc(c))}</div></td>
+        <td>${esc(c.country || "—")}</td>
+        <td><span class="chip gray">${count} ta</span></td>
+        <td>${c.isRegular ? `<span class="chip purple"><span class="dot"></span>Doimiy</span>` : `<span class="chip gray">Oddiy</span>`}</td>
+        <td><div class="actions">
+          <button class="icon-btn" title="Ko'rish" data-action="client-open" data-id="${c.id}">${icon("eye",16)}</button>
+          ${can("client.edit") ? `<button class="icon-btn" title="Tahrirlash" data-action="client-edit" data-id="${c.id}">${icon("edit",16)}</button>` : ""}
+          ${can("client.delete") ? `<button class="icon-btn" title="O'chirish" data-action="client-delete" data-id="${c.id}">${icon("trash",16)}</button>` : ""}
+        </div></td></tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+function setClientQuery(v) {
+  clientQuery = v;
+  render();
+  const el = $("#clientSearch");
+  if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+}
+function setClientFilter(v) { clientFilter = v; render(); }
+function csvCell(v) {
+  const s = String(v ?? "");
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function exportClientsCSV() {
+  if (!can("client.export")) return toast("Ruxsat yo'q", "Eksport qilish huquqi mavjud emas.", "error");
+  const rows = [["ID","Ism","Familiya","Telefon","E-mail","Hujjat turi","Hujjat raqami",
+    "Davlat","Tug'ilgan sana","Manzil","Doimiy mijoz","Izoh"]];
+  clientFiltered().forEach(c => rows.push([
+    c.id, c.firstName, c.lastName, c.phone, c.email || "", docTypeLabel(c.docType),
+    c.docNumber || "", c.country || "", c.birthDate || "", c.address || "",
+    c.isRegular ? "Ha" : "Yo'q", c.notes || ""
+  ]));
+  const csv = "\uFEFF" + rows.map(r => r.map(csvCell).join(";")).join("\r\n");
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `hms-mijozlar-${todayStr()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  log("CLIENTS_EXPORT", `${rows.length - 1} ta mijoz eksport qilindi`);
+  saveDB();
+  toast("Eksport tayyor", "Mijozlar CSV fayli yuklab olindi.");
+}
+
+/* =========================================================
+   BOOKINGS
+   ========================================================= */
+function bookingFiltered() {
+  let arr = [...db.bookings];
+  if (bookingFilters.status) arr = arr.filter(b => b.status === bookingFilters.status);
+  if (bookingFilters.q) {
+    const q = bookingFilters.q.toLowerCase();
+    arr = arr.filter(b => {
+      const c = client(b.clientId), r = room(b.roomId);
+      return b.code.toLowerCase().includes(q) || (c && clientName(c).toLowerCase().includes(q)) ||
+        (r && r.roomNumber.toLowerCase().includes(q));
+    });
+  }
+  return arr.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+function renderBookings() {
+  const arr = bookingFiltered();
+  return `
+  <div class="page-head">
+    <div><h1>Bronlar</h1><div class="sub">Bron yaratish, mavjudlik, check-in va check-out jarayonlari</div></div>
+    <div class="head-actions">
+      <div class="view-toggle">
+        <button class="${bookingView==="table"?"on":""}" data-action="booking-view" data-mode="table" title="Jadval">${icon("table",17)}</button>
+        <button class="${bookingView==="calendar"?"on":""}" data-action="booking-view" data-mode="calendar" title="Kalendar">${icon("calendar",17)}</button>
+      </div>
+      ${can("booking.create") ? `<button class="btn btn-primary" data-action="booking-add">${icon("plus",16)} Yangi bron</button>` : ""}
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search">${icon("search",17)}<input class="input" id="bookingSearch" placeholder="Bron kodi, mijoz yoki xona..." value="${esc(bookingFilters.q)}" oninput="setBookingFilter('q',this.value)"></div>
+    <select class="input" onchange="setBookingFilter('status',this.value)">
+      <option value="">Barcha holatlar</option>
+      ${Object.entries(BOOKING_STATUS).map(([k,v]) => `<option value="${k}" ${bookingFilters.status===k?"selected":""}>${v.label}</option>`).join("")}
+    </select>
+    <div class="small muted">${arr.length} ta bron</div>
+  </div>
+  ${bookingView === "calendar" ? bookingCalendar(arr) : `<div class="table-wrap"><table class="data">
+    <thead><tr><th>Kod</th><th>Mijoz</th><th>Xona</th><th>Sanalar</th><th>Kecha</th><th>Summa</th><th>Qoldiq</th><th>Holat</th><th>Amallar</th></tr></thead>
+    <tbody>${arr.map(b => {
+      const c = client(b.clientId), r = room(b.roomId);
+      const paid = bookingPaid(b), bal = bookingBalance(b);
+      return `<tr>
+        <td><button class="link-btn" style="font-size:12.5px" data-action="booking-open" data-id="${b.id}">${esc(b.code)}</button></td>
+        <td><div class="cell-main">${esc(clientName(c))}</div><div class="cell-sub">${b.guests} mehmon</div></td>
+        <td><div class="cell-main">${esc(r ? r.roomNumber : "—")}</div><div class="cell-sub">${esc(r ? (roomType(r.roomTypeId)||{}).name || "" : "")}</div></td>
+        <td class="nowrap">${fmtDateShort(b.checkIn)} – ${fmtDateShort(b.checkOut)}</td>
+        <td>${nights(b.checkIn, b.checkOut)}</td>
+        <td class="money">${money(b.total)}</td>
+        <td>${bal > 0 ? `<span style="color:var(--red);font-weight:700">${money(bal)}</span>` : `<span style="color:var(--green);font-weight:700">To'langan</span>`}</td>
+        <td>${statusChip(BOOKING_STATUS,b.status)}</td>
+        <td><div class="actions">
+          <button class="icon-btn" title="Ko'rish" data-action="booking-open" data-id="${b.id}">${icon("eye",16)}</button>
+          ${b.status === "pending" && can("booking.create") ? `<button class="icon-btn" title="Tasdiqlash" data-action="booking-confirm" data-id="${b.id}">${icon("check",16)}</button>` : ""}
+          ${b.status === "confirmed" && can("booking.checkin") ? `<button class="icon-btn" title="Check-in" data-action="booking-checkin" data-id="${b.id}">${icon("check",16)}</button>` : ""}
+          ${b.status === "confirmed" && can("booking.checkin") ? `<button class="icon-btn" title="Kelmadi" data-action="booking-noshow" data-id="${b.id}">${icon("alert",16)}</button>` : ""}
+          ${b.status === "checked_in" && can("booking.checkout") ? `<button class="icon-btn" title="Check-out" data-action="booking-checkout" data-id="${b.id}">${icon("logout",16)}</button>` : ""}
+          ${["pending","confirmed"].includes(b.status) && can("booking.edit") ? `<button class="icon-btn" title="Tahrirlash" data-action="booking-edit" data-id="${b.id}">${icon("edit",16)}</button>` : ""}
+          ${["pending","confirmed"].includes(b.status) && can("booking.cancel") ? `<button class="icon-btn" title="Bekor qilish" data-action="booking-cancel" data-id="${b.id}">${icon("x",16)}</button>` : ""}
+        </div></td></tr>`;
+    }).join("")}</tbody></table></div>`}`;
+}
+function bookingCalendar(arr) {
+  const dates = Array.from({length:14}, (_, i) => addDays(i));
+  const active = ["pending","confirmed","checked_in"];
+  const rooms = [...db.rooms].sort((a,b)=>String(a.roomNumber).localeCompare(String(b.roomNumber),undefined,{numeric:true}));
+  const th = dates.map(d => {
+    const dt = new Date(d + "T00:00:00");
+    const today = d === todayStr();
+    return `<th class="${today?"cal-today":""}"><span>${WEEKDAYS_SHORT[dt.getDay()]}</span><b>${dt.getDate()}</b><small>${MONTHS[dt.getMonth()].slice(0,3)}</small></th>`;
+  }).join("");
+  const rows = rooms.map(r => {
+    const cells = dates.map(d => {
+      const b = arr.find(x => x.roomId === r.id && active.includes(x.status) && x.checkIn <= d && d < x.checkOut);
+      if (!b) return `<td class="cal-free"></td>`;
+      const cls = b.status === "checked_in" ? "blue" : b.status === "confirmed" ? "green" : "yellow";
+      return `<td class="cal-cell"><span class="cal-book ${cls}" title="${esc(b.code)} · ${esc(clientName(client(b.clientId)))}">${esc(b.code.replace("B-2026-",""))}</span></td>`;
+    }).join("");
+    const t = roomType(r.roomTypeId);
+    return `<tr><td class="cal-room"><b>${esc(r.roomNumber)}</b><span>${esc(t?t.name:"")}</span></td>${cells}</tr>`;
+  }).join("");
+  return `<div class="cal-wrap"><table class="cal"><thead><tr><th class="cal-room">Xona</th>${th}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="cal-legend"><span><i class="dot pending"></i>Kutilmoqda</span><span><i class="dot confirmed"></i>Tasdiqlangan</span><span><i class="dot checked_in"></i>Joylashtirilgan</span><span class="muted">14 kunlik ko'rinish · bekor qilingan bronlar ko'rsatilmaydi</span></div>`;
+}
+function setBookingFilter(k, v) {
+  bookingFilters[k] = v;
+  render();
+  if (k === "q") {
+    const el = $("#bookingSearch");
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }
+}
+
+/* =========================================================
+   PAYMENTS
+   ========================================================= */
+function renderPayments() {
+  const arr = [...db.payments].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const filtered = arr.filter(p => {
+    if (!paymentQuery) return true;
+    const q = paymentQuery.toLowerCase();
+    const b = booking(p.bookingId), c = b ? client(b.clientId) : null;
+    return (b && b.code.toLowerCase().includes(q)) || (c && clientName(c).toLowerCase().includes(q));
+  });
+  const totalPaid = arr.filter(p => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
+  const thisMonth = arr.filter(p => p.status === "paid" && p.date.startsWith(monthKey())).reduce((s, p) => s + Number(p.amount), 0);
+  const debt = db.bookings.filter(b => !["cancelled","no_show"].includes(b.status)).reduce((s, b) => s + bookingBalance(b), 0);
+  return `
+  <div class="page-head">
+    <div><h1>To'lovlar</h1><div class="sub">To'lovlar, avanslar va qarzdorlik nazorati</div></div>
+    ${can("payment.create") ? `<button class="btn btn-primary" data-action="payment-add">${icon("plus",16)} To'lov qayd etish</button>` : ""}
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat green"><div class="sicon">${icon("money",18)}</div><div class="label">Jami tushum</div><div class="value" style="font-size:22px">${money(totalPaid)}</div><div class="hint">Barcha to'langan summalar</div></div>
+    <div class="stat"><div class="sicon">${icon("calendar",18)}</div><div class="label">Shu oy</div><div class="value" style="font-size:22px">${money(thisMonth)}</div><div class="hint">${MONTHS[new Date().getMonth()]} oyi</div></div>
+    <div class="stat red"><div class="sicon">${icon("alert",18)}</div><div class="label">Qarzdorlik</div><div class="value" style="font-size:22px">${money(debt)}</div><div class="hint">Faol bronlar bo'yicha</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search">${icon("search",17)}<input class="input" id="paymentSearch" placeholder="Bron kodi yoki mijoz..." value="${esc(paymentQuery)}" oninput="setPaymentQuery(this.value)"></div>
+    <div class="small muted">${filtered.length} ta to'lov</div>
+  </div>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Sana</th><th>Bron</th><th>Mijoz</th><th>Xona</th><th>Summa</th><th>Usul</th><th>Holat</th><th>Izoh</th></tr></thead>
+    <tbody>${filtered.map(p => {
+      const b = booking(p.bookingId), c = b ? client(b.clientId) : null, r = b ? room(b.roomId) : null;
+      return `<tr><td class="nowrap">${fmtDate(p.date)}</td><td><button class="link-btn" data-action="booking-open" data-id="${b ? b.id : ""}">${esc(b ? b.code : "—")}</button></td><td>${esc(c ? clientName(c) : "—")}</td><td>${esc(r ? r.roomNumber : "—")}</td><td class="money">${money(p.amount)}</td><td>${p.method === "card" ? "Karta" : p.method === "cash" ? "Naqd" : "O'tkazma"}</td><td>${p.status === "paid" ? `<span class="chip green"><span class="dot"></span>To'langan</span>` : `<span class="chip yellow">Kutilmoqda</span>`}</td><td class="muted">${esc(p.note || "—")}</td></tr>`;
+    }).join("")}</tbody></table></div>`;
+}
+function setPaymentQuery(v) {
+  paymentQuery = v;
+  render();
+  const el = $("#paymentSearch");
+  if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+}
+
+/* =========================================================
+   USERS
+   ========================================================= */
+function renderUsers() {
+  return `
+  <div class="page-head">
+    <div><h1>Foydalanuvchilar</h1><div class="sub">Tizim foydalanuvchilari, rollari va holati</div></div>
+    ${can("user") || currentUser.role === "admin" ? `<button class="btn btn-primary" data-action="user-add">${icon("plus",16)} Yangi foydalanuvchi</button>` : ""}
+  </div>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Foydalanuvchi</th><th>E-mail</th><th>Rol</th><th>Holat</th><th>Amallar</th></tr></thead>
+    <tbody>${db.users.map(u => `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar">${esc(initials(u.name))}</div><div><div class="cell-main">${esc(u.name)}</div><div class="cell-sub">${u.id === currentUser.id ? "Siz" : ""}</div></div></div></td>
+      <td>${esc(u.email)}</td><td>${roleChip(u.role)}</td>
+      <td>${u.active ? `<span class="chip green"><span class="dot"></span>Faol</span>` : `<span class="chip red"><span class="dot"></span>Bloklangan</span>`}</td>
+      <td><div class="actions">
+        <button class="icon-btn" title="Tahrirlash" data-action="user-edit" data-id="${u.id}">${icon("edit",16)}</button>
+        ${u.id !== currentUser.id ? `<button class="icon-btn" title="${u.active?"Bloklash":"Faollashtirish"}" data-action="user-toggle" data-id="${u.id}">${u.active ? icon("x",16) : icon("check",16)}</button>` : ""}
+      </div></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+function renderSettings() {
+  return `
+  <div class="page-head"><div><h1>Sozlamalar</h1><div class="sub">Demo ma'lumotlar, zaxira nusxa va tizim haqida</div></div></div>
+  <div class="dash-grid two">
+    <div class="panel">
+      <div class="panel-head"><h2>Ma'lumotlar</h2><span class="hint">Brauzerda saqlanadi</span></div>
+      <div class="stat-line"><span>Xonalar</span><b>${db.rooms.length} ta</b></div>
+      <div class="stat-line"><span>Xona turlari</span><b>${db.roomTypes.length} ta</b></div>
+      <div class="stat-line"><span>Mijozlar</span><b>${db.clients.length} ta</b></div>
+      <div class="stat-line"><span>Bronlar</span><b>${db.bookings.length} ta</b></div>
+      <div class="stat-line"><span>To'lovlar</span><b>${db.payments.length} ta</b></div>
+      <div class="stat-line"><span>Sprintlar</span><b>${(db.sprints || []).length} ta</b></div>
+      <div class="stat-line"><span>Issue lar</span><b>${(db.issues || []).length} ta</b></div>
+      <div class="stat-line"><span>Risk lar</span><b>${(db.risks || []).length} ta</b></div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" data-action="export">${icon("download",16)} JSON zaxira</button>
+        <label class="btn btn-secondary" style="cursor:pointer">${icon("upload",16)} Import<input type="file" id="importFile" accept="application/json" hidden></label>
+        <button class="btn btn-danger" data-action="reset">${icon("refresh",16)} Demo ma'lumotlarni tiklash</button>
+      </div>
+      <div class="help">Import qilish uchun avval shu tizimdan eksport qilingan JSON faylni tanlang.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>So'nggi harakatlar</h2><span class="hint">Audit jurnali</span></div>
+      ${db.activity.length ? db.activity.slice(0, 8).map(a => `<div class="list-row"><div class="list-ava">${esc(initials(a.user))}</div><div class="list-main"><b>${esc(a.action)}</b><span>${esc(a.detail || "")} · ${new Date(a.at).toLocaleString("uz-UZ")}</span></div></div>`).join("") : `<div class="empty"><b>Harakatlar yo'q</b>Amallar bajarilganda shu yerda ko'rinadi.</div>`}
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h2>Tizim haqida</h2></div>
+    <p class="muted" style="margin:0;font-size:12.5px;line-height:1.7">HMS — mehmonxona boshqaruv tizimining yakka HTML faylda ishlaydigan demo versiyasi. Muallif: <b>Iskandarov Dilshodbek</b>. Ma'lumotlar <b>localStorage</b> da saqlanadi, server talab qilinmaydi. Barcha amallar brauzerda bajariladi.</p>
+    <div class="tag-row" style="margin-top:10px"><span class="tag">HTML5</span><span class="tag">CSS3</span><span class="tag">JavaScript</span><span class="tag">localStorage</span><span class="tag">Responsive</span></div>
+  </div>`;
+}
+function bindSettings() {
+  const input = $("#importFile");
+  if (input) input.addEventListener("change", importDB);
+}
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+function openModal(html, cls = "") {
+  $("#modalRoot").innerHTML = `<div class="modal-backdrop" id="modalBackdrop"><div class="modal ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;
+  const bd = $("#modalBackdrop");
+  bd.addEventListener("click", e => { if (e.target === bd) closeModal(); });
+}
+function closeModal() { $("#modalRoot").innerHTML = ""; }
+function modalHead(title, sub = "") {
+  return `<div class="modal-head"><div><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ""}</div><button class="icon-btn" type="button" onclick="closeModal()">${icon("x",18)}</button></div>`;
+}
+function modalFoot(submitText = "Saqlash", extra = "") {
+  return `<div class="modal-foot">${extra}<button class="btn btn-secondary" type="button" onclick="closeModal()">Bekor qilish</button><button class="btn btn-primary" type="submit">${esc(submitText)}</button></div>`;
+}
+
+/* ---------- room modal ---------- */
+function openRoomModal(id) {
+  if (!can("room.create") && !can("room.edit")) return;
+  const r = id ? room(id) : null;
+  const typeOptions = db.roomTypes.map(t => `<option value="${t.id}" ${r && r.roomTypeId===t.id?"selected":""}>${esc(t.name)} (${esc(t.code)})</option>`).join("");
+  const amen = db.amenities.map(a => `<label class="chk"><input type="checkbox" name="amen" value="${a.id}" ${r && (r.amenities||[]).includes(a.id)?"checked":""}> ${esc(a.name)}</label>`).join("");
+  openModal(`
+    ${modalHead(r ? "Xonani tahrirlash" : "Yangi xona qo'shish", r ? `${r.roomNumber}-xona ma'lumotlari` : "Asosiy ma'lumotlar, narx va qulayliklar")}
+    <form data-form="room" data-id="${r ? r.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Xona raqami <span class="req">*</span></label><input class="input" name="roomNumber" value="${r?esc(r.roomNumber):""}" placeholder="masalan, 101" required></div>
+          <div class="field"><label>Qavat <span class="req">*</span></label><input class="input" name="floor" type="number" min="0" max="50" value="${r?r.floor:1}" required></div>
+          <div class="field"><label>Xona turi <span class="req">*</span></label><select class="input" name="roomTypeId" required>${typeOptions}</select></div>
+          <div class="field"><label>Maksimal sig'im <span class="req">*</span></label><input class="input" name="maxOccupancy" type="number" min="1" max="12" value="${r?r.maxOccupancy:2}" required></div>
+          <div class="field"><label>Bir kechalik narx <span class="req">*</span></label><input class="input" name="pricePerNight" type="number" min="0" step="1000" value="${r?r.pricePerNight:450000}" required></div>
+          <div class="field"><label>Holat</label><select class="input" name="status">${Object.entries(ROOM_STATUS).map(([k,v]) => `<option value="${k}" ${r && r.status===k?"selected":""}>${v.label}</option>`).join("")}</select></div>
+          <div class="field full"><label>Xona tavsifi</label><textarea class="input" name="description" placeholder="Manzara, mebel va boshqa tafsilotlar...">${r?esc(r.description||""):""}</textarea></div>
+          <div class="field full"><label>Qulayliklar</label><div class="amen-grid">${amen}</div></div>
+        </div>
+      </div>
+      ${modalFoot(r ? "O'zgarishlarni saqlash" : "Xonani saqlash")}
+    </form>`, "wide");
+}
+function saveRoom(form) {
+  const f = new FormData(form);
+  const id = form.dataset.id;
+  const r = id ? room(id) : null;
+  const number = String(f.get("roomNumber") || "").trim();
+  const floor = Number(f.get("floor"));
+  const typeId = f.get("roomTypeId");
+  const cap = Number(f.get("maxOccupancy"));
+  const price = Number(f.get("pricePerNight"));
+  const status = f.get("status");
+  const description = String(f.get("description") || "").trim();
+  const amenities = f.getAll("amen");
+  if (!number || !/^[0-9A-Za-z-]+$/.test(number)) return toast("Xato", "Xona raqami faqat harf, raqam va defisdan iborat bo'lsin.", "error");
+  if (db.rooms.some(x => x.id !== id && x.roomNumber.toLowerCase() === number.toLowerCase())) return toast("Xato", "Bu xona raqami allaqachon mavjud.", "error");
+  if (!typeId) return toast("Xato", "Xona turini tanlang.", "error");
+  if (!Number.isFinite(floor) || floor < 0 || floor > 50) return toast("Xato", "Qavat 0–50 oralig'ida bo'lishi kerak.", "error");
+  if (!Number.isFinite(cap) || cap < 1 || cap > 12) return toast("Xato", "Sig'im 1–12 oralig'ida bo'lishi kerak.", "error");
+  if (!Number.isFinite(price) || price < 0) return toast("Xato", "Narx manfiy bo'lmasligi kerak.", "error");
+  if (r && status !== r.status) {
+    if (!(TRANSITIONS[r.status] || []).includes(status)) return toast("Holat o'zgarishi mumkin emas", `"${ROOM_STATUS[r.status].label}" dan "${ROOM_STATUS[status].label}" ga o'tib bo'lmaydi.`, "error");
+  }
+  if (r) {
+    if (r.status !== status) r.history = [...(r.history||[]), { from:r.status, to:status, reason:"Qo'lda o'zgartirildi", at:todayStr(), by:currentUser.name }];
+    Object.assign(r, { roomNumber:number, floor, roomTypeId:typeId, maxOccupancy:cap, pricePerNight:price, status, description, amenities });
+    log("ROOM_UPDATED", `${number}-xona tahrirlandi`);
+    toast("Saqlandi", `${number}-xona ma'lumotlari yangilandi.`);
+  } else {
+    const rr = {
+      id:uid("room"), roomNumber:number, floor, roomTypeId:typeId, maxOccupancy:cap, pricePerNight:price,
+      status: status || "available", description, amenities, isActive:true,
+      history:[{ from:"", to:status || "available", reason:"Yangi xona", at:todayStr(), by:currentUser.name }]
+    };
+    db.rooms.push(rr);
+    log("ROOM_CREATED", `${number}-xona yaratildi`);
+    toast("Xona qo'shildi", `${number}-xona ro'yxatga kiritildi.`);
+  }
+  saveDB(); closeModal(); render();
+}
+function deleteRoom(id) {
+  const r = room(id);
+  if (!r) return;
+  if (db.bookings.some(b => b.roomId === id && ["pending","confirmed","checked_in"].includes(b.status))) return toast("O'chirib bo'lmaydi", "Bu xonada faol bron mavjud.", "error");
+  if (db.bookings.some(b => b.roomId === id)) return toast("O'chirib bo'lmaydi", "Bu xonaga tegishli bron tarixi mavjud. Xonani faolsizlantirish tavsiya etiladi.", "error");
+  confirmDialog("Xonani o'chirish", `${r.roomNumber}-xonani butunlay o'chirmoqchimisiz?`, () => {
+    db.rooms = db.rooms.filter(x => x.id !== id);
+    log("ROOM_DELETED", `${r.roomNumber}-xona o'chirildi`);
+    saveDB(); render(); toast("O'chirildi", "Xona ro'yxatdan olib tashlandi.");
+  });
+}
+function openRoomDetails(id) {
+  const r = room(id); if (!r) return;
+  const t = roomType(r.roomTypeId);
+  const active = db.bookings.find(b => b.roomId === id && ["pending","confirmed","checked_in"].includes(b.status));
+  const history = [...(r.history || [])].slice(-6).reverse();
+  openModal(`
+    ${modalHead(`${r.roomNumber}-xona`, `${t ? t.name : "—"} · ${r.floor}-qavat`)}
+    <div class="modal-body">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">${statusChip(ROOM_STATUS,r.status)}<span class="chip blue">${r.maxOccupancy} kishi</span><span class="chip purple">${money(r.pricePerNight)} / kecha</span></div>
+      <p class="muted" style="margin:0 0 14px">${esc(r.description || "Tavsif kiritilmagan.")}</p>
+      <div class="stat-line"><span>Xona turi</span><b>${esc(t ? t.name : "—")}</b></div>
+      <div class="stat-line"><span>Qulayliklar</span><b style="text-align:right;max-width:60%">${(r.amenities||[]).map(a => { const x = db.amenities.find(y => y.id === a); return x ? esc(x.name) : ""; }).filter(Boolean).join(", ") || "—"}</b></div>
+      ${active ? `<div class="stat-line"><span>Faol bron</span><b>${esc(active.code)} · ${esc(clientName(client(active.clientId)))}</b></div>` : ""}
+      <div class="divider"></div>
+      <div class="panel-head"><h2 style="font-size:13px">Holat tarixi</h2></div>
+      ${history.length ? history.map(h => `<div class="list-row"><div class="list-ava">${icon("refresh",14)}</div><div class="list-main"><b>${esc((ROOM_STATUS[h.to]||{}).label || h.to || "—")}</b><span>${esc(h.reason || "—")} · ${fmtDate(h.at)} · ${esc(h.by || "")}</span></div></div>`).join("") : `<div class="empty">Tarix yo'q</div>`}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" type="button" onclick="closeModal()">Yopish</button>
+      ${can("room.status") ? `<button class="btn btn-secondary" type="button" onclick="closeModal();openStatusModal('${r.id}')">${icon("refresh",15)} Holat</button>` : ""}
+      ${can("room.edit") ? `<button class="btn btn-primary" type="button" onclick="closeModal();openRoomModal('${r.id}')">${icon("edit",15)} Tahrirlash</button>` : ""}
+    </div>`, "wide");
+}
+function openStatusModal(id) {
+  const r = room(id); if (!r) return;
+  const opts = (TRANSITIONS[r.status] || []);
+  openModal(`
+    ${modalHead("Xona holatini o'zgartirish", `${r.roomNumber}-xona · hozirgi holat: ${ROOM_STATUS[r.status].label}`)}
+    <form data-form="status" data-id="${r.id}">
+      <div class="modal-body">
+        <div class="field"><label>Yangi holat <span class="req">*</span></label>
+          <select class="input" name="status" required>${opts.map(s => `<option value="${s}">${ROOM_STATUS[s].label}</option>`).join("")}</select>
+          <div class="help">Ruxsat etilgan o'tishlar: ${opts.map(s => ROOM_STATUS[s].label).join(", ") || "yo'q"}.</div>
+        </div>
+        <div class="field" style="margin-top:12px"><label>Sabab</label><textarea class="input" name="reason" placeholder="Masalan, tozalash yakunlandi yoki ta'mir boshlandi..."></textarea></div>
+      </div>
+      ${modalFoot("Holatni saqlash")}
+    </form>`, "narrow");
+}
+function saveStatus(form) {
+  const r = room(form.dataset.id);
+  const f = new FormData(form);
+  const next = f.get("status");
+  const reason = String(f.get("reason") || "").trim();
+  if (!r || !next) return;
+  if (!(TRANSITIONS[r.status] || []).includes(next)) return toast("Xato", "Bu holat o'zgarishi ruxsat etilmagan.", "error");
+  r.history = [...(r.history||[]), { from:r.status, to:next, reason:reason || "Qo'lda o'zgartirildi", at:todayStr(), by:currentUser.name }];
+  r.status = next;
+  log("ROOM_STATUS", `${r.roomNumber}-xona: ${ROOM_STATUS[next].label}`);
+  saveDB(); closeModal(); render();
+  toast("Holat yangilandi", `${r.roomNumber}-xona: ${ROOM_STATUS[next].label}`);
+}
+
+/* ---------- room type modal ---------- */
+function openTypeModal(id) {
+  const t = id ? db.roomTypes.find(x => x.id === id) : null;
+  openModal(`
+    ${modalHead(t ? "Xona turini tahrirlash" : "Yangi xona turi")}
+    <form data-form="type" data-id="${t ? t.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Kod <span class="req">*</span></label><input class="input" name="code" value="${t?esc(t.code):""}" placeholder="STD" required></div>
+          <div class="field"><label>Nomi <span class="req">*</span></label><input class="input" name="name" value="${t?esc(t.name):""}" placeholder="Standart" required></div>
+          <div class="field"><label>Sig'im <span class="req">*</span></label><input class="input" name="capacity" type="number" min="1" max="12" value="${t?t.capacity:2}" required></div>
+          <div class="field"><label>Bazaviy narx <span class="req">*</span></label><input class="input" name="basePrice" type="number" min="0" step="1000" value="${t?t.basePrice:450000}" required></div>
+          <div class="field full"><label>Tavsif</label><textarea class="input" name="description">${t?esc(t.description||""):""}</textarea></div>
+        </div>
+      </div>
+      ${modalFoot(t ? "Saqlash" : "Tur yaratish")}
+    </form>`, "narrow");
+}
+function saveType(form) {
+  const f = new FormData(form); const id = form.dataset.id;
+  const code = String(f.get("code") || "").trim().toUpperCase();
+  const name = String(f.get("name") || "").trim();
+  const capacity = Number(f.get("capacity")); const basePrice = Number(f.get("basePrice"));
+  const description = String(f.get("description") || "").trim();
+  if (!/^[A-Z0-9]{2,8}$/.test(code)) return toast("Xato", "Kod 2–8 ta harf yoki raqamdan iborat bo'lsin.", "error");
+  if (!name) return toast("Xato", "Tur nomini kiriting.", "error");
+  if (db.roomTypes.some(t => t.id !== id && t.code.toUpperCase() === code)) return toast("Xato", "Bu kod allaqachon ishlatilgan.", "error");
+  if (!Number.isFinite(capacity) || capacity < 1) return toast("Xato", "Sig'im noto'g'ri.", "error");
+  if (!Number.isFinite(basePrice) || basePrice < 0) return toast("Xato", "Narx noto'g'ri.", "error");
+  if (id) {
+    const t = db.roomTypes.find(x => x.id === id);
+    Object.assign(t, { code, name, capacity, basePrice, description });
+    log("ROOM_TYPE_UPDATED", `${name} turi tahrirlandi`);
+    toast("Saqlandi", "Xona turi yangilandi.");
+  } else {
+    db.roomTypes.push({ id:uid("rt"), code, name, capacity, basePrice, description });
+    log("ROOM_TYPE_CREATED", `${name} turi yaratildi`);
+    toast("Qo'shildi", "Yangi xona turi yaratildi.");
+  }
+  saveDB(); closeModal(); render();
+}
+function deleteType(id) {
+  const t = db.roomTypes.find(x => x.id === id); if (!t) return;
+  const used = db.rooms.filter(r => r.roomTypeId === id).length;
+  if (used) return toast("O'chirib bo'lmaydi", `Bu tur ${used} ta xonada ishlatilmoqda.`, "error");
+  confirmDialog("Tur o'chirish", `"${t.name}" turini o'chirmoqchimisiz?`, () => {
+    db.roomTypes = db.roomTypes.filter(x => x.id !== id);
+    log("ROOM_TYPE_DELETED", `${t.name} turi o'chirildi`);
+    saveDB(); render(); toast("O'chirildi", "Xona turi olib tashlandi.");
+  });
+}
+
+/* ---------- client modal ---------- */
+function openClientModal(id) {
+  const c = id ? client(id) : null;
+  openModal(`
+    ${modalHead(c ? "Mijozni tahrirlash" : "Yangi mijoz", "Aloqa ma'lumotlari, hujjat va maxfiylik")}
+    <form data-form="client" data-id="${c ? c.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Ism <span class="req">*</span></label><input class="input" name="firstName" value="${c?esc(c.firstName):""}" required></div>
+          <div class="field"><label>Familiya <span class="req">*</span></label><input class="input" name="lastName" value="${c?esc(c.lastName):""}" required></div>
+          <div class="field"><label>Telefon <span class="req">*</span></label><input class="input" name="phone" value="${c?esc(c.phone):""}" placeholder="+998 90 123 45 67" required></div>
+          <div class="field"><label>E-mail</label><input class="input" name="email" type="email" value="${c?esc(c.email||""):""}"></div>
+          <div class="field"><label>Hujjat turi <span class="req">*</span></label>
+            <select class="input" name="docType" required>
+              <option value="passport" ${!c || c.docType==="passport"?"selected":""}>Pasport</option>
+              <option value="id_card" ${c && c.docType==="id_card"?"selected":""}>ID-karta</option>
+            </select></div>
+          <div class="field"><label>Hujjat raqami <span class="req">*</span></label><input class="input" name="docNumber" value="${c?esc(c.docNumber||""):""}" placeholder="AA1234567" required></div>
+          <div class="field"><label>Fuqarolik</label><input class="input" name="country" value="${c?esc(c.country||"O'zbekiston"):"O'zbekiston"}"></div>
+          <div class="field"><label>Tug'ilgan sana</label><input class="input" name="birthDate" type="date" value="${c?esc(c.birthDate||""):""}"></div>
+          <div class="field full"><label>Yashash manzili</label><input class="input" name="address" value="${c?esc(c.address||""):""}" placeholder="Shahar, ko'cha, uy"></div>
+          <div class="field full"><label>Izoh</label><textarea class="input" name="notes">${c?esc(c.notes||""):""}</textarea></div>
+          <div class="field full"><label class="chk" style="width:fit-content"><input type="checkbox" name="isRegular" ${c && c.isRegular?"checked":""}> Doimiy mijoz sifatida belgilash</label></div>
+        </div>
+      </div>
+      ${modalFoot(c ? "Saqlash" : "Mijoz qo'shish")}
+    </form>`, "wide");
+}
+function saveClient(form) {
+  const f = new FormData(form); const id = form.dataset.id;
+  const firstName = String(f.get("firstName") || "").trim();
+  const lastName = String(f.get("lastName") || "").trim();
+  const phone = String(f.get("phone") || "").trim();
+  const email = String(f.get("email") || "").trim();
+  const docType = f.get("docType");
+  const docNumber = String(f.get("docNumber") || "").trim().toUpperCase();
+  const country = String(f.get("country") || "").trim();
+  const birthDate = String(f.get("birthDate") || "");
+  const address = String(f.get("address") || "").trim();
+  const notes = String(f.get("notes") || "").trim();
+  const isRegular = f.get("isRegular") === "on";
+  if (!firstName || !lastName) return toast("Xato", "Ism va familiyani kiriting.", "error");
+  if (phone.replace(/\D/g, "").length < 9) return toast("Xato", "Telefon raqami kamida 9 ta raqamdan iborat bo'lsin.", "error");
+  if (!/^[A-Z0-9-]{5,20}$/.test(docNumber)) return toast("Xato", "Hujjat raqami 5–20 ta harf, raqam yoki defisdan iborat bo'lsin.", "error");
+  const phoneNorm = phone.replace(/\D/g, "").slice(-9);
+  const dup = db.clients.find(x => x.id !== id &&
+    (x.phone.replace(/\D/g, "").slice(-9) === phoneNorm ||
+     String(x.docNumber || "").toUpperCase() === docNumber));
+  if (dup) return toast("Takroriy mijoz", `Bu telefon yoki hujjat bo'yicha mijoz mavjud: ${clientName(dup)}.`, "error");
+  if (id) {
+    const c = client(id);
+    Object.assign(c, { firstName, lastName, phone, email, docType, docNumber, country, birthDate, address, notes, isRegular });
+    log("CLIENT_UPDATED", `${firstName} ${lastName} tahrirlandi`);
+    toast("Saqlandi", "Mijoz ma'lumotlari yangilandi.");
+  } else {
+    db.clients.push({ id:uid("c"), firstName, lastName, phone, email, docType, docNumber,
+      country, birthDate, address, notes, isRegular, createdAt:todayStr() });
+    log("CLIENT_CREATED", `${firstName} ${lastName} qo'shildi`);
+    toast("Qo'shildi", "Yangi mijoz yaratildi.");
+  }
+  saveDB(); closeModal(); render();
+}
+function deleteClient(id) {
+  const c = client(id); if (!c) return;
+  if (db.bookings.some(b => b.clientId === id)) return toast("O'chirib bo'lmaydi", "Bu mijozning bron tarixi mavjud.", "error");
+  confirmDialog("Mijozni o'chirish", `${clientName(c)} ni o'chirmoqchimisiz?`, () => {
+    db.clients = db.clients.filter(x => x.id !== id);
+    log("CLIENT_DELETED", `${clientName(c)} o'chirildi`);
+    saveDB(); render(); toast("O'chirildi", "Mijoz olib tashlandi.");
+  });
+}
+function openClientDetails(id) {
+  const c = client(id); if (!c) return;
+  const bs = db.bookings.filter(b => b.clientId === id).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  const total = bs.filter(b => !["cancelled","no_show"].includes(b.status)).reduce((s, b) => s + Number(b.total || 0), 0);
+  const paid = bs.reduce((s, b) => s + bookingPaid(b), 0);
+  const debt = bs.filter(b => !["cancelled","no_show"].includes(b.status)).reduce((s, b) => s + bookingBalance(b), 0);
+  openModal(`
+    ${modalHead(clientName(c), "Mijoz kartasi va tashriflar tarixi")}
+    <div class="modal-body">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+        ${c.isRegular ? `<span class="chip purple"><span class="dot"></span>Doimiy mijoz</span>` : ""}
+        <span class="chip blue">${bs.length} ta bron</span>
+        ${!can("client.sensitive") ? `<span class="chip yellow">${icon("shield",12)} Maxfiy maydonlar yashirilgan</span>` : ""}
+      </div>
+      <div class="stat-line"><span>Telefon</span><b>${esc(c.phone)}</b></div>
+      <div class="stat-line"><span>E-mail</span><b>${esc(c.email || "—")}</b></div>
+      <div class="stat-line"><span>Hujjat</span><b>${esc(docTypeLabel(c.docType))} · ${esc(maskDoc(c))}</b></div>
+      <div class="stat-line"><span>Fuqarolik</span><b>${esc(c.country || "—")}</b></div>
+      <div class="stat-line"><span>Tug'ilgan sana</span><b>${c.birthDate ? fmtDate(c.birthDate) : "—"}</b></div>
+      <div class="stat-line"><span>Manzil</span><b style="text-align:right;max-width:60%">${esc(c.address || "—")}</b></div>
+      <div class="stat-line"><span>Izoh</span><b style="text-align:right;max-width:60%">${esc(c.notes || "—")}</b></div>
+      <div class="divider"></div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+        <div class="stat"><div class="label">Jami bron</div><div class="value" style="font-size:20px">${money(total)}</div></div>
+        <div class="stat green"><div class="label">To'langan</div><div class="value" style="font-size:20px">${money(paid)}</div></div>
+        <div class="stat red"><div class="label">Qarzdorlik</div><div class="value" style="font-size:20px">${money(debt)}</div></div>
+      </div>
+      <div class="panel-head"><h2 style="font-size:13px">Bronlar tarixi</h2></div>
+      ${bs.length ? `<div class="table-wrap" style="border:0"><table class="data" style="min-width:620px"><thead><tr><th>Kod</th><th>Xona</th><th>Sanalar</th><th>Summa</th><th>Qoldiq</th><th>Holat</th></tr></thead><tbody>${bs.map(b => { const r = room(b.roomId); return `<tr><td>${esc(b.code)}</td><td>${esc(r?r.roomNumber:"—")}</td><td class="nowrap">${fmtDateShort(b.checkIn)} – ${fmtDateShort(b.checkOut)}</td><td class="money">${money(b.total)}</td><td>${bookingBalance(b)>0?`<span style="color:var(--red)">${money(bookingBalance(b))}</span>`:`<span style="color:var(--green)">To'langan</span>`}</td><td>${statusChip(BOOKING_STATUS,b.status)}</td></tr>`; }).join("")}</tbody></table></div>` : `<div class="empty">Bronlar yo'q</div>`}
+    </div>
+    <div class="modal-foot"><button class="btn btn-secondary" type="button" onclick="closeModal()">Yopish</button>${can("client.edit") ? `<button class="btn btn-primary" type="button" onclick="closeModal();openClientModal('${c.id}')">${icon("edit",15)} Tahrirlash</button>` : ""}</div>`, "wide");
+}
+
+/* ---------- booking modal ---------- */
+function bookingAvailableRooms(checkIn, checkOut, guests, excludeId) {
+  return db.rooms.filter(r => r.isActive !== false && r.status !== "maintenance" &&
+    r.maxOccupancy >= guests && !roomBusy(r.id, checkIn, checkOut, excludeId))
+    .sort((a,b)=>String(a.roomNumber).localeCompare(String(b.roomNumber),undefined,{numeric:true}));
+}
+function roomOptionsHtml(checkIn, checkOut, guests, selectedId, excludeId) {
+  const list = bookingAvailableRooms(checkIn, checkOut, guests, excludeId);
+  if (!list.length) return `<option value="">Bo'sh xona yo'q</option>`;
+  return `<option value="">Xonani tanlang</option>` + list.map(r => {
+    const t = roomType(r.roomTypeId);
+    return `<option value="${r.id}" ${selectedId===r.id?"selected":""}>${esc(r.roomNumber)} · ${esc(t?t.name:"")} · ${money(r.pricePerNight)} · ${r.maxOccupancy} kishi</option>`;
+  }).join("");
+}
+function refreshBookingRooms(preserve) {
+  const ci = $("#bookingCheckIn")?.value, co = $("#bookingCheckOut")?.value;
+  const adults = Number($("#bookingAdults")?.value || 2);
+  const children = Number($("#bookingChildren")?.value || 0);
+  const guests = adults + children;
+  const sel = preserve || $("#bookingRoom")?.value || "";
+  const el = $("#bookingRoom");
+  if (!el || !ci || !co || co <= ci) return;
+  el.innerHTML = roomOptionsHtml(ci, co, guests, sel, $("#bookingFormId")?.value || "");
+  const count = bookingAvailableRooms(ci, co, guests, $("#bookingFormId")?.value || "").length;
+  const hint = $("#bookingRoomHint");
+  if (hint) hint.textContent = count ? `${count} ta bo'sh xona topildi` : "Tanlangan sanalar uchun bo'sh xona yo'q";
+  if (!el.value) {
+    const first = el.querySelectorAll("option")[1];
+    if (first) el.value = first.value;
+  }
+  updateBookingTotal();
+}
+function openBookingModal(id) {
+  const edit = id ? booking(id) : null;
+  if (!can("booking.create") && !can("booking.edit")) return;
+  if (edit && !["pending","confirmed"].includes(edit.status)) return toast("Tahrirlab bo'lmaydi", "Faqat kutilayotgan yoki tasdiqlangan bronni tahrirlash mumkin.", "error");
+  const cOpts = db.clients.map(c => `<option value="${c.id}" ${edit && edit.clientId===c.id?"selected":""}>${esc(clientName(c))} · ${esc(c.phone)}</option>`).join("");
+  const ci = edit ? edit.checkIn : todayStr();
+  const co = edit ? edit.checkOut : addDays(1);
+  const adults = edit ? (edit.adults ?? edit.guests ?? 2) : 2;
+  const children = edit ? (edit.children ?? 0) : 0;
+  const rOpts = roomOptionsHtml(ci, co, adults + children, edit ? edit.roomId : "", edit ? edit.id : "");
+  openModal(`
+    ${modalHead(edit ? "Bronni tahrirlash" : "Yangi bron yaratish", "Mijoz, sanalar va bo'sh xonani tanlang")}
+    <form data-form="booking" data-id="${edit ? edit.id : ""}" id="bookingForm">
+      <input type="hidden" id="bookingFormId" value="${edit ? edit.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Mijoz <span class="req">*</span></label><select class="input" name="clientId" required><option value="">Mijozni tanlang</option>${cOpts}</select></div>
+          <div class="field"><label>Xona <span class="req">*</span></label><select class="input" name="roomId" id="bookingRoom" required>${rOpts}</select><div class="help" id="bookingRoomHint"></div></div>
+          <div class="field"><label>Kelish sanasi <span class="req">*</span></label><input class="input" id="bookingCheckIn" name="checkIn" type="date" value="${ci}" onchange="refreshBookingRooms()" required></div>
+          <div class="field"><label>Jo'nab ketish sanasi <span class="req">*</span></label><input class="input" id="bookingCheckOut" name="checkOut" type="date" value="${co}" onchange="refreshBookingRooms()" required></div>
+          <div class="field"><label>Kattalar <span class="req">*</span></label><input class="input" id="bookingAdults" name="adults" type="number" min="1" max="12" value="${adults}" onchange="refreshBookingRooms()" required></div>
+          <div class="field"><label>Bolalar</label><input class="input" id="bookingChildren" name="children" type="number" min="0" max="10" value="${children}" onchange="refreshBookingRooms()"></div>
+          <div class="field full"><label>Maxsus talablar / izoh</label><textarea class="input" name="notes" placeholder="Kelish vaqti, qo'shimcha karavot, ovqat...">${edit?esc(edit.notes||""):""}</textarea></div>
+          <div class="field full"><div class="panel" style="background:#F2F7FD;border-color:#D6E4F5;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px"><div><span class="muted small">Jami summa</span><div class="small muted" id="bookingCalc"></div></div><b id="bookingTotal" style="font-size:20px;color:var(--navy)">—</b></div></div>
+        </div>
+      </div>
+      ${modalFoot(edit ? "O'zgarishlarni saqlash" : "Bronni yaratish")}
+    </form>`, "wide");
+  setTimeout(() => { refreshBookingRooms(edit ? edit.roomId : ""); }, 0);
+}
+function updateBookingTotal() {
+  const roomId = $("#bookingRoom")?.value;
+  const ci = $("#bookingCheckIn")?.value, co = $("#bookingCheckOut")?.value;
+  const adults = Number($("#bookingAdults")?.value || 0), children = Number($("#bookingChildren")?.value || 0);
+  const r = room(roomId);
+  const el = $("#bookingTotal");
+  if (!el) return;
+  const n = nights(ci, co);
+  const guests = adults + children;
+  el.textContent = r && n > 0 ? money(n * r.pricePerNight) : "—";
+  const calc = $("#bookingCalc");
+  if (calc) calc.textContent = r && n > 0 ? `${n} kecha × ${money(r.pricePerNight)} · ${guests} mehmon` : "Xona va sanalarni tanlang";
+  if (r && guests > r.maxOccupancy) el.textContent += " · sig'im oshdi";
+}
+function saveBooking(form) {
+  const f = new FormData(form), id = form.dataset.id;
+  const clientId = f.get("clientId"), roomId = f.get("roomId");
+  const checkIn = f.get("checkIn"), checkOut = f.get("checkOut");
+  const adults = Number(f.get("adults")), children = Number(f.get("children") || 0);
+  const guests = adults + children;
+  const notes = String(f.get("notes") || "").trim();
+  const r = room(roomId);
+  const old = id ? booking(id) : null;
+  if (!clientId) return toast("Xato", "Mijozni tanlang.", "error");
+  if (!r) return toast("Xato", "Bo'sh xonani tanlang.", "error");
+  if (!checkIn || !checkOut || checkOut <= checkIn) return toast("Xato", "Sanalar noto'g'ri kiritilgan.", "error");
+  if (r.status === "maintenance") return toast("Xona ta'mirda", "Ta'mirdagi xonani bron qilib bo'lmaydi.", "error");
+  if (guests < 1 || guests > r.maxOccupancy) return toast("Xato", `Bu xona uchun maksimal sig'im ${r.maxOccupancy} kishi.`, "error");
+  if (roomBusy(roomId, checkIn, checkOut, id || null)) return toast("Xona band", "Tanlangan sanalarda bu xona boshqa bron bilan band.", "error");
+  const total = nights(checkIn, checkOut) * r.pricePerNight;
+  if (id && old) {
+    const oldRoom = room(old.roomId);
+    const history = old.priceHistory || [];
+    if (Number(old.total) !== total) history.push({ at:todayStr(), total:old.total, newTotal:total, by:currentUser.name });
+    Object.assign(old, { clientId, roomId, checkIn, checkOut, adults, children, guests, total, notes, priceHistory:history });
+    old.status = old.status === "pending" ? "pending" : "confirmed";
+    if (oldRoom && oldRoom.id !== r.id && !db.bookings.some(x => x.id !== old.id && x.roomId === oldRoom.id && ["pending","confirmed","checked_in"].includes(x.status))) {
+      if (oldRoom.status === "reserved") oldRoom.status = "available";
+    }
+    if (r.status === "available") r.status = "reserved";
+    log("BOOKING_UPDATED", `${old.code} tahrirlandi`);
+    saveDB(); closeModal(); render();
+    toast("Bron yangilandi", `${old.code} · ${money(total)}`);
+  } else {
+    const b = { id:uid("booking"), code:nextBookingCode(), clientId, roomId, checkIn, checkOut,
+      adults, children, guests, status:"pending", total, createdAt:todayStr(), notes, priceHistory:[] };
+    db.bookings.push(b);
+    if (r.status === "available") r.status = "reserved";
+    log("BOOKING_CREATED", `${b.code} · ${r.roomNumber}-xona · ${money(total)}`);
+    saveDB(); closeModal(); render();
+    toast("Bron yaratildi", `${b.code} · ${money(total)} · tasdiqlashni kuting.`);
+  }
+}
+function openBookingDetails(id) {
+  const b = booking(id); if (!b) return;
+  const c = client(b.clientId), r = room(b.roomId), t = r ? roomType(r.roomTypeId) : null;
+  const paid = bookingPaid(b), bal = bookingBalance(b);
+  const pays = db.payments.filter(p => p.bookingId === b.id);
+  const guestText = `${b.adults ?? b.guests ?? 0} kattalar${b.children ? `, ${b.children} bolalar` : ""}`;
+  openModal(`
+    ${modalHead(`${b.code}`, `${esc(clientName(c))} · ${esc(r ? r.roomNumber + "-xona" : "—")}`)}
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${statusChip(BOOKING_STATUS,b.status)}<span class="chip blue">${guestText}</span><span class="chip gray">${nights(b.checkIn,b.checkOut)} kecha</span></div>
+      <div class="stat-line"><span>Kelish</span><b>${fmtDate(b.checkIn)}</b></div>
+      <div class="stat-line"><span>Jo'nab ketish</span><b>${fmtDate(b.checkOut)}</b></div>
+      <div class="stat-line"><span>Xona</span><b>${esc(r ? r.roomNumber + " · " + (t?t.name:"") : "—")}</b></div>
+      <div class="stat-line"><span>Jami summa</span><b>${money(b.total)}</b></div>
+      <div class="stat-line"><span>To'langan</span><b style="color:var(--green)">${money(paid)}</b></div>
+      <div class="stat-line"><span>Qoldiq</span><b style="color:${bal>0?"var(--red)":"var(--green)"}">${bal>0?money(bal):"To'langan"}</b></div>
+      ${b.notes ? `<div class="stat-line"><span>Maxsus talablar</span><b style="text-align:right;max-width:60%">${esc(b.notes)}</b></div>` : ""}
+      ${b.cancelledReason ? `<div class="stat-line"><span>Bekor qilish sababi</span><b style="text-align:right;max-width:60%">${esc(b.cancelledReason)}</b></div>` : ""}
+      <div class="divider"></div>
+      <div class="panel-head"><h2 style="font-size:13px">To'lovlar</h2>${can("payment.create") && !["cancelled","no_show"].includes(b.status) ? `<button class="link-btn" onclick="closeModal();openPaymentModal('${b.id}')">+ To'lov</button>` : ""}</div>
+      ${pays.length ? pays.map(p => `<div class="list-row"><div class="list-ava">${icon("card",14)}</div><div class="list-main"><b>${money(p.amount)}</b><span>${fmtDate(p.date)} · ${p.method === "card" ? "Karta" : p.method === "cash" ? "Naqd" : "O'tkazma"} · ${esc(p.note || "")}</span></div></div>`).join("") : `<div class="empty">To'lovlar yo'q</div>`}
+      ${(b.priceHistory||[]).length ? `<div class="divider"></div><div class="panel-head"><h2 style="font-size:13px">Narx tarixi</h2></div>${b.priceHistory.map(h => `<div class="stat-line"><span>${fmtDate(h.at)} · ${esc(h.by||"")}</span><b>${money(h.total)} → ${money(h.newTotal)}</b></div>`).join("")}` : ""}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" type="button" onclick="printBooking('${b.id}')">${icon("download",15)} Chop etish</button>
+      <button class="btn btn-secondary" type="button" onclick="closeModal()">Yopish</button>
+      ${b.status === "pending" && can("booking.confirm") ? `<button class="btn btn-primary" type="button" onclick="closeModal();confirmBooking('${b.id}')">Tasdiqlash</button>` : ""}
+      ${b.status === "confirmed" && can("booking.checkin") ? `<button class="btn btn-primary" type="button" onclick="closeModal();checkInBooking('${b.id}')">Check-in</button>` : ""}
+      ${b.status === "confirmed" && can("booking.checkin") ? `<button class="btn btn-secondary" type="button" onclick="closeModal();noShowBooking('${b.id}')">Kelmadi</button>` : ""}
+      ${b.status === "checked_in" && can("booking.checkout") ? `<button class="btn btn-primary" type="button" onclick="closeModal();checkOutBooking('${b.id}')">Check-out</button>` : ""}
+      ${["pending","confirmed"].includes(b.status) && can("booking.edit") ? `<button class="btn btn-secondary" type="button" onclick="closeModal();openBookingModal('${b.id}')">Tahrirlash</button>` : ""}
+      ${["pending","confirmed"].includes(b.status) && can("booking.cancel") ? `<button class="btn btn-danger" type="button" onclick="closeModal();openCancelModal('${b.id}')">Bekor qilish</button>` : ""}
+    </div>`, "wide");
+}
+function confirmBooking(id) {
+  const b = booking(id); if (!b) return;
+  if (b.status !== "pending") return toast("Xato", "Faqat kutilayotgan bronni tasdiqlash mumkin.", "error");
+  b.status = "confirmed"; b.confirmedAt = todayStr();
+  const r = room(b.roomId); if (r && r.status === "available") r.status = "reserved";
+  log("BOOKING_CONFIRMED", `${b.code} tasdiqlandi`);
+  saveDB(); render(); toast("Bron tasdiqlandi", b.code);
+}
+function noShowBooking(id) {
+  const b = booking(id); if (!b) return;
+  if (b.status !== "confirmed") return toast("Xato", "No-show faqat tasdiqlangan bron uchun qo'llaniladi.", "error");
+  confirmDialog("Kelmagan deb belgilash", `${b.code} bo'yicha mehmon kelmadi deb belgilansinmi?`, () => {
+    b.status = "no_show";
+    const r = room(b.roomId);
+    if (r && !db.bookings.some(x => x.id !== b.id && x.roomId === r.id && ["pending","confirmed","checked_in"].includes(x.status)) && r.status === "reserved") r.status = "available";
+    log("BOOKING_NO_SHOW", `${b.code} kelmagan`);
+    saveDB(); render(); toast("Belgilandi", `${b.code} — kelmagan.`);
+  });
+}
+function openCancelModal(id) {
+  const b = booking(id); if (!b) return;
+  openModal(`
+    ${modalHead("Bronni bekor qilish", `${b.code} · ${esc(clientName(client(b.clientId)))}`)}
+    <form data-form="cancel" data-id="${b.id}">
+      <div class="modal-body"><div class="field"><label>Bekor qilish sababi <span class="req">*</span></label><textarea class="input" name="reason" placeholder="Masalan, mijoz rejasini o'zgartirdi..." required></textarea></div></div>
+      ${modalFoot("Bekor qilish")}
+    </form>`, "narrow");
+}
+function saveCancel(form) {
+  const b = booking(form.dataset.id); if (!b) return;
+  const f = new FormData(form);
+  b.status = "cancelled"; b.cancelledReason = String(f.get("reason") || "").trim();
+  const r = room(b.roomId);
+  if (r && !db.bookings.some(x => x.id !== b.id && x.roomId === r.id && ["pending","confirmed","checked_in"].includes(x.status)) && r.status === "reserved") r.status = "available";
+  log("BOOKING_CANCELLED", `${b.code}: ${b.cancelledReason}`);
+  saveDB(); closeModal(); render(); toast("Bekor qilindi", b.code);
+}
+function checkInBooking(id) {
+  const b = booking(id); if (!b) return;
+  if (b.status !== "confirmed") return toast("Xato", "Avval bronni tasdiqlang, keyin check-in qiling.", "error");
+  const r = room(b.roomId);
+  if (r && db.bookings.some(x => x.id !== b.id && x.roomId === r.id && x.status === "checked_in")) return toast("Xato", "Bu xonada allaqachon mehmon yashamoqda.", "error");
+  b.status = "checked_in";
+  if (r) {
+    r.history = [...(r.history||[]), { from:r.status, to:"occupied", reason:"Check-in", at:todayStr(), by:currentUser.name }];
+    r.status = "occupied";
+  }
+  log("CHECK_IN", `${b.code} · ${r ? r.roomNumber : ""}`);
+  saveDB(); render(); toast("Check-in", `${r ? r.roomNumber + "-xona" : "Xona"} mehmonga ochildi.`);
+}
+function checkOutBooking(id) {
+  const b = booking(id); if (!b) return;
+  if (b.status !== "checked_in") return toast("Xato", "Faqat joylashtirilgan mehmonni check-out qilish mumkin.", "error");
+  const r = room(b.roomId);
+  b.status = "completed";
+  if (r) {
+    r.history = [...(r.history||[]), { from:r.status, to:"cleaning", reason:"Check-out", at:todayStr(), by:currentUser.name }];
+    r.status = "cleaning";
+  }
+  const bal = bookingBalance(b);
+  log("CHECK_OUT", `${b.code} · qoldiq: ${money(bal)}`);
+  saveDB(); render(); toast("Check-out", bal > 0 ? `Xona tozalashga o'tdi. Qoldiq: ${money(bal)}` : "Xona tozalashga o'tdi.", bal > 0 ? "info" : "ok");
+}
+function printBooking(id) {
+  const b = booking(id); if (!b) return;
+  const c = client(b.clientId), r = room(b.roomId), t = r ? roomType(r.roomTypeId) : null;
+  const html = `<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>${esc(b.code)}</title>
+  <style>body{font-family:'Times New Roman',serif;color:#1F3864;padding:40px;max-width:700px;margin:auto}
+  h1{font-size:24px;margin:0} .sub{color:#666;font-size:13px;margin-top:4px}
+  .box{border:1px solid #B4C7E7;border-radius:10px;padding:18px;margin-top:20px}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee;font-size:14px}
+  .row:last-child{border:0}.muted{color:#777}.total{font-size:20px;font-weight:bold;margin-top:14px;text-align:right}
+  .foot{margin-top:30px;font-size:12px;color:#777;text-align:center}</style></head><body>
+  <h1>MEHMONXONA</h1><div class="sub">Bron tasdiqnomasi · ${esc(b.code)}</div>
+  <div class="box">
+    <div class="row"><span>Mijoz</span><b>${esc(clientName(c))}</b></div>
+    <div class="row"><span>Telefon</span><b>${esc(c.phone)}</b></div>
+    <div class="row"><span>Xona</span><b>${esc(r ? r.roomNumber + " · " + (t?t.name:"") : "—")}</b></div>
+    <div class="row"><span>Kelish</span><b>${fmtDate(b.checkIn)}</b></div>
+    <div class="row"><span>Jo'nab ketish</span><b>${fmtDate(b.checkOut)}</b></div>
+    <div class="row"><span>Mehmonlar</span><b>${b.adults ?? b.guests} kattalar${b.children ? `, ${b.children} bolalar` : ""}</b></div>
+    <div class="row"><span>Holat</span><b>${BOOKING_STATUS[b.status].label}</b></div>
+    <div class="total">${money(b.total)}</div>
+  </div>
+  <div class="foot">Hurmatli mehmon, kelishingizni tasdiqlaymiz. Bron kodi: ${esc(b.code)}</div>
+  <script>window.onload=function(){window.print()}<\/script></body></html>`;
+  const w = window.open("", "_blank");
+  if (!w) return toast("Chop etish", "Brauzer popup ni blokladi. Ruxsat bering.", "error");
+  w.document.write(html); w.document.close();
+}
+
+/* ---------- payment modal ---------- */
+function openPaymentModal(bookingId) {
+  const candidates = db.bookings.filter(b => !["cancelled","no_show"].includes(b.status) && bookingBalance(b) > 0);
+  if (!candidates.length) return toast("To'lov yo'q", "Qoldig'i mavjud bron topilmadi.", "info");
+  const selected = bookingId ? candidates.find(b => b.id === bookingId) : candidates[0];
+  const opts = candidates.map(b => {
+    const c = client(b.clientId), r = room(b.roomId);
+    return `<option value="${b.id}" ${selected && b.id===selected.id?"selected":""}>${esc(b.code)} · ${esc(c?clientName(c):"")} · ${esc(r?r.roomNumber:"")} · qoldiq ${money(bookingBalance(b))}</option>`;
+  }).join("");
+  openModal(`
+    ${modalHead("To'lov qayd etish", "Bron bo'yicha to'lovni kiriting")}
+    <form data-form="payment">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>Bron <span class="req">*</span></label><select class="input" name="bookingId" id="payBooking" onchange="updatePaymentAmount()">${opts}</select></div>
+          <div class="field"><label>Summa <span class="req">*</span></label><input class="input" id="payAmount" name="amount" type="number" min="1" step="1000" required></div>
+          <div class="field"><label>To'lov usuli</label><select class="input" name="method"><option value="card">Karta</option><option value="cash">Naqd</option><option value="transfer">O'tkazma</option></select></div>
+          <div class="field"><label>Sana</label><input class="input" name="date" type="date" value="${todayStr()}" required></div>
+          <div class="field"><label>Izoh</label><input class="input" name="note" placeholder="Masalan, avans yoki to'liq to'lov"></div>
+        </div>
+        <div class="help" id="payHint" style="margin-top:8px"></div>
+      </div>
+      ${modalFoot("To'lovni saqlash")}
+    </form>`, "narrow");
+  updatePaymentAmount();
+}
+function updatePaymentAmount() {
+  const b = booking($("#payBooking")?.value);
+  const el = $("#payAmount"); const hint = $("#payHint");
+  if (!b || !el) return;
+  el.value = bookingBalance(b);
+  if (hint) hint.textContent = `${b.code} · jami ${money(b.total)} · qoldiq ${money(bookingBalance(b))}`;
+}
+function savePayment(form) {
+  const f = new FormData(form);
+  const b = booking(f.get("bookingId"));
+  const amount = Number(f.get("amount"));
+  if (!b) return toast("Xato", "Bronni tanlang.", "error");
+  if (!Number.isFinite(amount) || amount <= 0) return toast("Xato", "Summani to'g'ri kiriting.", "error");
+  if (amount > bookingBalance(b) + 1) return toast("Xato", "Summa qoldiqdan katta bo'lmasligi kerak.", "error");
+  db.payments.push({
+    id:uid("pay"), bookingId:b.id, amount, method:f.get("method"),
+    status:"paid", date:f.get("date"), note:String(f.get("note") || "").trim()
+  });
+  log("PAYMENT", `${b.code} · ${money(amount)}`);
+  saveDB(); closeModal(); render();
+  toast("To'lov saqlandi", `${b.code} · ${money(amount)}`);
+}
+
+/* ---------- user modal ---------- */
+function openUserModal(id) {
+  const u = id ? db.users.find(x => x.id === id) : null;
+  openModal(`
+    ${modalHead(u ? "Foydalanuvchini tahrirlash" : "Yangi foydalanuvchi")}
+    <form data-form="user" data-id="${u ? u.id : ""}">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>To'liq ism <span class="req">*</span></label><input class="input" name="name" value="${u?esc(u.name):""}" required></div>
+          <div class="field"><label>E-mail <span class="req">*</span></label><input class="input" name="email" type="email" value="${u?esc(u.email):""}" required></div>
+          <div class="field"><label>Parol ${u?"(bo'sh qoldirilsa o'zgarmaydi)":"<span class=\"req\">*</span>"}</label><input class="input" name="password" type="text" value="" placeholder="${u?"Yangi parol":"Kamida 6 belgi"}"></div>
+          <div class="field"><label>Rol <span class="req">*</span></label><select class="input" name="role">${Object.entries(ROLE_LABEL).map(([k,v]) => `<option value="${k}" ${u && u.role===k?"selected":""}>${v}</option>`).join("")}</select></div>
+          <div class="field"><label>Holat</label><select class="input" name="active"><option value="1" ${!u || u.active?"selected":""}>Faol</option><option value="0" ${u && !u.active?"selected":""}>Bloklangan</option></select></div>
+        </div>
+      </div>
+      ${modalFoot(u ? "Saqlash" : "Foydalanuvchi yaratish")}
+    </form>`, "narrow");
+}
+function saveUser(form) {
+  const f = new FormData(form); const id = form.dataset.id;
+  const name = String(f.get("name") || "").trim();
+  const email = String(f.get("email") || "").trim().toLowerCase();
+  const password = String(f.get("password") || "").trim();
+  const role = f.get("role");
+  const active = f.get("active") === "1";
+  if (!name || !email) return toast("Xato", "Ism va e-mailni kiriting.", "error");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Xato", "E-mail formati noto'g'ri.", "error");
+  if (db.users.some(u => u.id !== id && u.email.toLowerCase() === email)) return toast("Xato", "Bu e-mail allaqachon ro'yxatdan o'tgan.", "error");
+  if (!id && password.length < 6) return toast("Xato", "Parol kamida 6 belgidan iborat bo'lsin.", "error");
+  if (id) {
+    const u = db.users.find(x => x.id === id);
+    if (u.id === currentUser.id && !active) return toast("Xato", "O'zingizni bloklay olmaysiz.", "error");
+    if (u.id === currentUser.id && role !== currentUser.role) return toast("Xato", "O'z rolingizni o'zgartira olmaysiz.", "error");
+    Object.assign(u, { name, email, role, active });
+    if (password) u.password = password;
+    if (u.id === currentUser.id) currentUser = u;
+    log("USER_UPDATED", `${name} tahrirlandi`);
+    toast("Saqlandi", "Foydalanuvchi yangilandi.");
+  } else {
+    db.users.push({ id:uid("u"), name, email, password, role, active });
+    log("USER_CREATED", `${name} qo'shildi`);
+    toast("Qo'shildi", "Yangi foydalanuvchi yaratildi.");
+  }
+  saveDB(); closeModal(); render();
+}
+function toggleUser(id) {
+  const u = db.users.find(x => x.id === id); if (!u) return;
+  if (u.id === currentUser.id) return toast("Xato", "O'zingizni bloklay olmaysiz.", "error");
+  const next = !u.active;
+  confirmDialog(next ? "Foydalanuvchini faollashtirish" : "Foydalanuvchini bloklash", `${u.name} ni ${next?"faollashtirmoqchimisiz":"bloklamoqchimisiz"}?`, () => {
+    u.active = next;
+    log("USER_STATUS", `${u.name}: ${next?"faol":"bloklangan"}`);
+    saveDB(); render(); toast("Yangilandi", `${u.name} ${next?"faollashtirildi":"bloklandi"}.`);
+  });
+}
+
+/* =========================================================
+   CONFIRM / EXPORT / IMPORT
+   ========================================================= */
+function confirmDialog(title, text, onYes) {
+  openModal(`
+    ${modalHead(title)}
+    <div class="modal-body"><p style="margin:0;color:#4A5A6E">${esc(text)}</p></div>
+    <div class="modal-foot"><button class="btn btn-secondary" type="button" onclick="closeModal()">Bekor qilish</button><button class="btn btn-danger" type="button" id="confirmYes">Tasdiqlash</button></div>`, "narrow");
+  $("#confirmYes").addEventListener("click", () => { closeModal(); onYes(); });
+}
+function exportDB() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `hms-backup-${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  toast("Zaxira tayyor", "JSON fayl yuklab olindi.");
+}
+function importDB(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.rooms) || !Array.isArray(data.bookings)) throw new Error("bad");
+      db = data; db.version = DB_VERSION; saveDB(); render();
+      toast("Import qilindi", "Ma'lumotlar muvaffaqiyatli yuklandi.");
+    } catch { toast("Xato", "Fayl formati noto'g'ri.", "error"); }
+  };
+  reader.readAsText(file);
+}
+function resetDemo() {
+  confirmDialog("Demo ma'lumotlarni tiklash", "Barcha o'zgarishlar o'chib, boshlang'ich namunaviy ma'lumotlar qayta yuklanadi. Davom etasizmi?", () => {
+    db = seedDB(); saveDB(); render();
+    toast("Tiklandi", "Demo ma'lumotlar qayta yuklandi.");
+  });
+}
+
+/* =========================================================
+   EVENTS
+   ========================================================= */
+function onGlobalClick(e) {
+  const nav = e.target.closest("[data-nav]");
+  if (nav) { e.preventDefault(); navigate(nav.dataset.nav); return; }
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const a = btn.dataset.action;
+  const id = btn.dataset.id;
+  switch (a) {
+    case "issue-add": openIssueModal(); break;
+    case "issue-open": openIssueModal(id); break;
+    case "issue-move-left": moveIssue(id, -1); break;
+    case "issue-move-right": moveIssue(id, 1); break;
+    case "risk-add": openRiskModal(); break;
+    case "risk-edit": openRiskModal(id); break;
+    case "room-add": openRoomModal(); break;
+    case "room-edit": openRoomModal(id); break;
+    case "room-open": openRoomDetails(id); break;
+    case "room-status": openStatusModal(id); break;
+    case "room-delete": deleteRoom(id); break;
+    case "room-view": roomView = btn.dataset.mode; render(); break;
+    case "type-add": openTypeModal(); break;
+    case "type-edit": openTypeModal(id); break;
+    case "type-delete": deleteType(id); break;
+    case "client-add": openClientModal(); break;
+    case "client-edit": openClientModal(id); break;
+    case "client-open": openClientDetails(id); break;
+    case "client-delete": deleteClient(id); break;
+    case "client-export": exportClientsCSV(); break;
+    case "booking-add": openBookingModal(); break;
+    case "booking-open": if (id) openBookingDetails(id); break;
+    case "booking-view": bookingView = btn.dataset.mode; render(); break;
+    case "booking-edit": openBookingModal(id); break;
+    case "booking-confirm": confirmBooking(id); break;
+    case "booking-noshow": noShowBooking(id); break;
+    case "booking-checkin": checkInBooking(id); break;
+    case "booking-checkout": checkOutBooking(id); break;
+    case "booking-cancel": openCancelModal(id); break;
+    case "payment-add": openPaymentModal(); break;
+    case "user-add": openUserModal(); break;
+    case "user-edit": openUserModal(id); break;
+    case "user-toggle": toggleUser(id); break;
+    case "export": exportDB(); break;
+    case "reset": resetDemo(); break;
+    case "logout": doLogout(); break;
+  }
+}
+function onGlobalSubmit(e) {
+  const form = e.target.closest("form[data-form]");
+  if (!form) return;
+  e.preventDefault();
+  const type = form.dataset.form;
+  if (type === "room") saveRoom(form);
+  else if (type === "status") saveStatus(form);
+  else if (type === "type") saveType(form);
+  else if (type === "client") saveClient(form);
+  else if (type === "booking") saveBooking(form);
+  else if (type === "payment") savePayment(form);
+  else if (type === "user") saveUser(form);
+  else if (type === "issue") saveIssue(form);
+  else if (type === "cancel") saveCancel(form);
+  else if (type === "risk") saveRisk(form);
+}
+
+/* =========================================================
+   START
+   ========================================================= */
+boot();
+</script>
+</body>
+</html>
